@@ -12,7 +12,7 @@ import matplotlib.colors as mcolors
 import pandas as pd
 import simplekml
 
-from .constants import ADMIN_NAME_COLUMN, NO_DATA_COLOR, OPF_COLORS
+from ..constants import ADMIN_NAME_COLUMN, NO_DATA_COLOR, OPF_COLORS
 
 log = logging.getLogger(__name__)
 

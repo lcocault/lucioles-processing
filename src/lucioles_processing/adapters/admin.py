@@ -8,7 +8,7 @@ from pathlib import Path
 
 import geopandas as gpd
 
-from .constants import ADMIN_DEPT_COLUMN
+from ..constants import ADMIN_DEPT_COLUMN
 
 log = logging.getLogger(__name__)
 

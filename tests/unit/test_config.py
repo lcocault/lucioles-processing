@@ -1,18 +1,80 @@
 import pytest
 
-from lucioles_processing.collect import period_fields
-from lucioles_processing.config import IndicatorSpec, SourceConfig, load_config
+from lucioles_processing.config import (
+    IndicatorSpec,
+    SourceConfig,
+    load_chain_definition,
+    parse_chain_definition,
+)
+from lucioles_processing.domain.run import Step
+from tests.doubles import raw_definition
 
 
 def test_example_config_loads():
-    cfg = load_config("configs/air_quality.example.yaml")
-    assert cfg.indicator.name == "air_quality"
-    assert set(cfg.sources) == {"no2", "pm10"}
+    d = load_chain_definition("configs/air_quality.example.yaml")
+    assert d.name == "air_quality"
+    assert d.indicator.name == "air_quality"
+    assert set(d.sources) == {"no2", "pm10"}
+    assert set(d.steps) == set(Step)
+
+
+def test_optional_steps_default_to_none():
+    d = parse_chain_definition(raw_definition())
+    assert d.steps[Step.SAVE].use == "none"
+    assert d.steps[Step.DISTRIBUTE].use == "none"
+
+
+def test_step_params_are_kept():
+    d = parse_chain_definition(raw_definition(build={"use": "x", "params": {"formats": ["kml"]}}))
+    assert d.steps[Step.BUILD].params == {"formats": ["kml"]}
+
+
+@pytest.mark.parametrize("missing", ["chain", "indicator", "sources", "steps"])
+def test_missing_top_level_key(missing):
+    raw = raw_definition()
+    del raw[missing]
+    with pytest.raises(ValueError, match=missing):
+        parse_chain_definition(raw)
+
+
+@pytest.mark.parametrize("step", ["fetch", "read", "calculate", "build"])
+def test_mandatory_step_missing(step):
+    raw = raw_definition()
+    del raw["steps"][step]
+    with pytest.raises(ValueError, match=f"obligatoire absente : '{step}'"):
+        parse_chain_definition(raw)
+
+
+def test_unknown_step():
+    with pytest.raises(ValueError, match="Étapes inconnues"):
+        parse_chain_definition(raw_definition(teleport={"use": "x"}))
+
+
+def test_step_without_use():
+    with pytest.raises(ValueError, match="'use' est obligatoire"):
+        parse_chain_definition(raw_definition(build={"params": {}}))
+
+
+def test_weights_for_unknown_source():
+    raw = raw_definition()
+    raw["indicator"]["weights"] = {"zzz": 1.0}
+    with pytest.raises(ValueError, match="sources inconnues"):
+        parse_chain_definition(raw)
+
+
+def test_not_a_mapping():
+    with pytest.raises(ValueError, match="dictionnaire"):
+        parse_chain_definition(["a"])
 
 
 def test_unknown_method():
     with pytest.raises(ValueError, match="inconnue"):
         SourceConfig(name="x", method="magic", path="a.tif")
+
+
+def test_source_requires_path_or_url():
+    with pytest.raises(ValueError, match="path"):
+        SourceConfig(name="x", method="zonal_mean")
 
 
 def test_nearest_station_requires_dims():
@@ -23,13 +85,3 @@ def test_nearest_station_requires_dims():
 def test_thresholds_must_be_sorted():
     with pytest.raises(ValueError):
         IndicatorSpec(name="i", weights={}, thresholds=[4, 3, 2, 1])
-
-
-@pytest.mark.parametrize("bad", ["2026", "2026-13", "10-2026", "abc"])
-def test_invalid_period(bad):
-    with pytest.raises(ValueError, match="Période invalide"):
-        period_fields(bad)
-
-
-def test_period_fields():
-    assert period_fields("2026-10") == {"period": "2026-10", "year": "2026", "month": "10"}

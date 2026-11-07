@@ -1,13 +1,23 @@
-"""Configuration déclarative d'un indicateur (fichier YAML)."""
+"""Définition déclarative d'une chaîne de traitement (fichier YAML).
+
+Exemple : voir `configs/air_quality.example.yaml`. Une chaîne décrit l'indicateur calculé,
+ses sources, et l'implémentation (`use`) retenue pour chacune des six étapes.
+"""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 import yaml
 
+from .domain.run import Step
+
 METHODS = {"zonal_mean", "nearest_station"}
+
+#: Étapes sans implémentation obligatoire : `none` (ne rien faire) par défaut.
+OPTIONAL_STEPS = {Step.SAVE: "none", Step.DISTRIBUTE: "none"}
 
 
 @dataclass
@@ -51,23 +61,61 @@ class IndicatorSpec:
             raise ValueError("Les couleurs OPF supposent 4 seuils (5 classes)")
 
 
+@dataclass(frozen=True)
+class StepSpec:
+    """Implémentation retenue pour une étape (`use`) et ses paramètres."""
+
+    use: str
+    params: dict[str, Any] = field(default_factory=dict)
+
+
 @dataclass
-class IndicatorConfig:
+class ChainDefinition:
+    name: str
     indicator: IndicatorSpec
     sources: dict[str, SourceConfig]
-    departments: list[str] = field(default_factory=list)  # vide = tous les départements
+    steps: dict[Step, StepSpec]
 
     def __post_init__(self) -> None:
         unknown = set(self.indicator.weights) - set(self.sources)
         if unknown:
             raise ValueError(f"Poids définis pour des sources inconnues : {sorted(unknown)}")
+        missing = [s.value for s in Step if s not in self.steps]
+        if missing:
+            raise ValueError(f"Étapes non définies : {missing}")
 
 
-def load_config(path: str | Path) -> IndicatorConfig:
-    raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
-    sources = {name: SourceConfig(name=name, **cfg) for name, cfg in raw["sources"].items()}
-    return IndicatorConfig(
+def parse_chain_definition(raw: dict[str, Any]) -> ChainDefinition:
+    """Construit et valide une définition à partir du contenu YAML déjà chargé."""
+    if not isinstance(raw, dict):
+        raise ValueError("La définition de chaîne doit être un dictionnaire YAML")  # noqa: TRY004 - erreur de configuration, traitée comme les autres
+    for key in ("chain", "indicator", "sources", "steps"):
+        if key not in raw:
+            raise ValueError(f"Clé obligatoire absente : '{key}'")
+
+    valid = {s.value for s in Step}
+    unknown = set(raw["steps"]) - valid
+    if unknown:
+        raise ValueError(f"Étapes inconnues : {sorted(unknown)} (attendu : {sorted(valid)})")
+
+    steps: dict[Step, StepSpec] = {}
+    for step in Step:
+        cfg = raw["steps"].get(step.value)
+        if cfg is None:
+            if step not in OPTIONAL_STEPS:
+                raise ValueError(f"Étape obligatoire absente : '{step.value}'")
+            cfg = {"use": OPTIONAL_STEPS[step]}
+        if "use" not in cfg:
+            raise ValueError(f"Étape '{step.value}' : 'use' est obligatoire")
+        steps[step] = StepSpec(use=cfg["use"], params=dict(cfg.get("params") or {}))
+
+    return ChainDefinition(
+        name=str(raw["chain"]),
         indicator=IndicatorSpec(**raw["indicator"]),
-        sources=sources,
-        departments=[str(d) for d in raw.get("departments", [])],
+        sources={n: SourceConfig(name=n, **c) for n, c in raw["sources"].items()},
+        steps=steps,
     )
+
+
+def load_chain_definition(path: str | Path) -> ChainDefinition:
+    return parse_chain_definition(yaml.safe_load(Path(path).read_text(encoding="utf-8")))

@@ -1,13 +1,13 @@
-# Exemple de configuration d'un indicateur. À adapter aux jeux de données réels.
+# Exemple de définition de chaîne. À adapter aux jeux de données réels.
 # {period} / {year} / {month} sont remplacés par la période du run (ex. 2026-10).
+chain: air_quality
+
 indicator:
   name: air_quality
   weights:            # somme pondérée des valeurs communales de chaque source
     no2: 0.6
     pm10: 0.4
   thresholds: [10, 20, 30, 40]   # 4 seuils -> niveaux OPF 0 (bon) à 4 (mauvais)
-
-departments: ["31"]   # vide = toute la France (long)
 
 sources:
   no2:
@@ -20,3 +20,27 @@ sources:
     field: pm10
     dims: [longitude, latitude]
     condition: "valid == 1"
+
+# Une implémentation (`use`) par étape ; `save` et `distribute` valent `none` si omis.
+steps:
+  fetch:
+    use: configured_sources
+    params:
+      cache_dir: cache            # téléchargements réutilisés d'une exécution à l'autre
+  read:
+    use: commune_aggregation
+    params:
+      admin: data/inputs/ADMIN-EXPRESS.gpkg
+      departments: ["31"]         # vide = toute la France (long)
+  calculate:
+    use: weighted_sum
+  save:
+    use: none
+  build:
+    use: map_files
+    params:
+      formats: [gpkg, geojson, kml, pmtiles]
+  distribute:
+    use: local_folder
+    params:
+      directory: output

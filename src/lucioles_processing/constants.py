@@ -9,3 +9,4 @@ NO_DATA_COLOR = "#9e9e9e"
 # Colonnes du fond administratif IGN ADMIN_EXPRESS
 ADMIN_DEPT_COLUMN = "code_insee_du_departement"
 ADMIN_NAME_COLUMN = "nom_officiel"
+ADMIN_CODE_COLUMN = "code_insee"

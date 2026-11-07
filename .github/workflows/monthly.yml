@@ -19,6 +19,6 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e .
-      # TODO : récupérer ADMIN_EXPRESS (stockage objet), installer tippecanoe/pmtiles
-      - run: lucioles run --config configs/air_quality.example.yaml --period ${{ inputs.period }} --admin data/inputs/admin.gpkg
+      # TODO : récupérer ADMIN_EXPRESS dans data/inputs/ADMIN-EXPRESS.gpkg (stockage objet), installer tippecanoe/pmtiles
+      - run: lucioles run --config configs/air_quality.example.yaml --period ${{ inputs.period }}
       # TODO : publier output/ (stockage objet versionné par période)

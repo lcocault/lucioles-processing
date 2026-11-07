@@ -33,6 +33,10 @@ packages = ["src/lucioles_processing"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "e2e: parcours complet depuis la définition de chaîne jusqu'aux fichiers produits",
+    "integration: nécessite un service externe (PostgreSQL/PostGIS, ...)",
+]
 
 [tool.ruff]
 line-length = 100

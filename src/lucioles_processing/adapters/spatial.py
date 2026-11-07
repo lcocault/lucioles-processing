@@ -1,9 +1,7 @@
-"""Moteur de calcul d'indicateurs spatiaux par commune.
+"""Agrégation spatiale des sources par commune.
 
-Même principe que le laboratoire (Lucioles-lab) : chaque source est agrégée par commune
-(`zonal_mean` ou `nearest_station`), puis combinée en un indicateur classé de 0 à 4.
-Différences : le moteur ne lit plus aucun fichier de configuration ni de fond de carte
-lui-même, les valeurs manquantes sont des NaN (et non des 0) et le classement est vectorisé.
+Chaque source est agrégée par commune (`zonal_mean` ou `nearest_station`) ; une commune
+sans donnée vaut NaN (et non 0).
 """
 
 from __future__ import annotations
@@ -18,8 +16,8 @@ import rasterio
 from rasterio.mask import mask
 from scipy.spatial import cKDTree
 
+from ..config import SourceConfig
 from .admin import centroids
-from .config import IndicatorSpec, SourceConfig
 
 log = logging.getLogger(__name__)
 
@@ -27,7 +25,7 @@ VECTOR_EXT = {".gpkg", ".shp", ".geojson", ".json"}
 RASTER_EXT = {".tif", ".tiff", ".nc"}
 
 
-class SpatialIndicatorEngine:
+class SpatialExtractor:
     def __init__(self, communes: gpd.GeoDataFrame):
         self.gdf = communes.copy()
         self._centroids = centroids(self.gdf)
@@ -89,17 +87,6 @@ class SpatialIndicatorEngine:
             raise ValueError(f"[{source.name}] aucune station après application de la condition")
         _, idx = cKDTree(df[source.dims].values).query(self._centroids, k=1)
         return pd.Series(df.iloc[idx][source.field].values, index=self.gdf.index)
-
-    # --- indicateur -------------------------------------------------------
-
-    def compute_indicator(self, spec: IndicatorSpec, extracted: dict[str, pd.Series]) -> None:
-        """Ajoute `val_<source>`, l'indicateur et son niveau OPF (0..4, <NA> si donnée absente)."""
-        for name, series in extracted.items():
-            self.gdf[f"val_{name}"] = series
-        total = sum(self.gdf[f"val_{n}"] * w for n, w in spec.weights.items())
-        self.gdf[spec.name] = total
-        level = pd.Series(np.digitize(total, spec.thresholds), index=self.gdf.index, dtype="Int64")
-        self.gdf["opf_level"] = level.where(total.notna())
 
 
 def _eval_condition(condition: str, field: str | None, data: np.ndarray) -> np.ndarray:

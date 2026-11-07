@@ -3,14 +3,14 @@
 Objectif : isoler le domaine et définir la chaîne en 6 étapes, sans dépendance à PostgreSQL, au Web
 ni au planificateur. Le code actuel (`collect`, `engine`, `export`, `pipeline`) devient des adaptateurs.
 
-## US-1.1 — Modèle de domaine interne  `M` `à faire`
+## US-1.1 — Modèle de domaine interne  `M` `fait`
 En tant que développeur, je veux un modèle de données interne indépendant des formats sources
 (`Indicator`, `IndicatorValue`, `Period`, `Territory`, `ProductFile`), afin que le calcul ne dépende d'aucune
 bibliothèque d'entrée/sortie.
 - Le paquet `domain` n'importe ni geopandas, ni psycopg, ni framework Web (vérifié par un test d'architecture).
 - Les objets sont immuables et validés (période `AAAA-MM`, niveau 0–4 ou absent).
 
-## US-1.2 — Ports de la chaîne  `M` `à faire`
+## US-1.2 — Ports de la chaîne  `M` `fait`
 En tant que développeur, je veux six interfaces (`DataFetcher`, `DataReader`, `IndicatorCalculator`,
 `IndicatorRepository`, `ProductBuilder`, `ProductDistributor`) afin de découpler les étapes de leurs implémentations.
 - Chaque port est une classe abstraite/`Protocol` documentée avec entrées et sorties typées.

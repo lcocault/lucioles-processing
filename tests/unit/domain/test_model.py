@@ -44,12 +44,12 @@ class TestTerritory:
 
 class TestDataset:
     def make(self, **kw):
-        args = dict(
-            period=Period(2026, 10),
-            territories=(Territory("A"), Territory("B")),
-            sources=("no2",),
-            observations=(Observation("no2", "A", 12.0), Observation("no2", "B", None)),
-        )
+        args = {
+            "period": Period(2026, 10),
+            "territories": (Territory("A"), Territory("B")),
+            "sources": ("no2",),
+            "observations": (Observation("no2", "A", 12.0), Observation("no2", "B", None)),
+        }
         args.update(kw)
         return Dataset(**args)
 

@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+dist/
+*.egg-info/
+
+# Données d'entrée, cache et sorties : jamais versionnées
+data/**
+!data/inputs/README.md
+output/
+cache/

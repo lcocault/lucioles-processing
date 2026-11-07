@@ -1,0 +1,22 @@
+# Exemple de configuration d'un indicateur. À adapter aux jeux de données réels.
+# {period} / {year} / {month} sont remplacés par la période du run (ex. 2026-10).
+indicator:
+  name: air_quality
+  weights:            # somme pondérée des valeurs communales de chaque source
+    no2: 0.6
+    pm10: 0.4
+  thresholds: [10, 20, 30, 40]   # 4 seuils -> niveaux OPF 0 (bon) à 4 (mauvais)
+
+departments: ["31"]   # vide = toute la France (long)
+
+sources:
+  no2:
+    method: zonal_mean
+    path: data/inputs/no2_{period}.tif
+    condition: "data > 0"
+  pm10:
+    method: nearest_station
+    url: https://example.org/stations/pm10_{year}_{month}.csv
+    field: pm10
+    dims: [longitude, latitude]
+    condition: "valid == 1"

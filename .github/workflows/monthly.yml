@@ -1,0 +1,24 @@
+# Squelette du run mensuel. Lancement manuel pour l'instant ; activer `schedule`
+# une fois les sources réelles et le stockage des sorties configurés.
+name: Run mensuel
+on:
+  workflow_dispatch:
+    inputs:
+      period:
+        description: "Période AAAA-MM"
+        required: true
+  # schedule:
+  #   - cron: "0 6 5 * *"   # le 5 de chaque mois, 06:00 UTC
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      # TODO : récupérer ADMIN_EXPRESS (stockage objet), installer tippecanoe/pmtiles
+      - run: lucioles run --config configs/air_quality.example.yaml --period ${{ inputs.period }} --admin data/inputs/admin.gpkg
+      # TODO : publier output/ (stockage objet versionné par période)

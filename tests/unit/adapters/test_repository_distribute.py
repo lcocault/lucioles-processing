@@ -14,20 +14,20 @@ def test_in_memory_repository_is_idempotent(tmp_path):
     repo = InMemoryRepository()
     v1 = [IndicatorValue("i", P2, "A", 1.0, 0)]
     v2 = [IndicatorValue("i", P2, "A", 50.0, 4), IndicatorValue("i", P2, "B", 2.0, 0)]
-    repo.save(ctx(tmp_path), v1)
-    repo.save(ctx(tmp_path), v2)
+    repo.save(ctx(tmp_path), [], v1)
+    repo.save(ctx(tmp_path), [], v2)
     assert repo.store[("i", P2)] == v2
 
 
 def test_in_memory_repository_keeps_other_periods(tmp_path):
     repo = InMemoryRepository()
-    repo.save(ctx(tmp_path, P1), [IndicatorValue("i", P1, "A", 1.0, 0)])
-    repo.save(ctx(tmp_path), [IndicatorValue("i", P2, "A", 2.0, 0)])
+    repo.save(ctx(tmp_path, P1), [], [IndicatorValue("i", P1, "A", 1.0, 0)])
+    repo.save(ctx(tmp_path), [], [IndicatorValue("i", P2, "A", 2.0, 0)])
     assert set(repo.store) == {("i", P1), ("i", P2)}
 
 
 def test_null_repository(tmp_path):
-    assert NullRepository().save(ctx(tmp_path), []) is None
+    assert NullRepository().save(ctx(tmp_path), [], []) is None
 
 
 def test_local_folder_distributor_copies_and_overwrites(tmp_path):

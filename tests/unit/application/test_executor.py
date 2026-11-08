@@ -28,7 +28,7 @@ def test_successful_run(tmp_path):
     assert [s.status for s in run.steps] == [Status.SUCCEEDED] * 6
     assert all(s.duration is not None for s in run.steps)
     assert run.duration is not None and run.error is None
-    assert len(repo.saved[0]) == 1
+    assert [t.code for t in repo.saved[0][0]] == ["A"] and len(repo.saved[0][1]) == 1
     assert [p.name for p in dist.distributed] == ["out.txt"]
     assert [p.name for p in run.products] == ["out.txt"]
 

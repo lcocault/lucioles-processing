@@ -18,7 +18,8 @@ les adaptateurs les implémentent ; un registre associe le nom d'une implémenta
 | `application/registry.py` | Registre des implémentations, construction des composants |
 | `application/executor.py` | `ChainExecutor` : enchaîne les étapes, trace les statuts, notifie les écouteurs |
 | `adapters/` | `fetch` (fichiers/URL), `read` (agrégation par commune), `calculate` (somme pondérée), `repository` (aucun/mémoire), `build` (GPKG, GeoJSON, KML, PMTiles, manifeste), `distribute` (dossier local) |
-| `cli.py` | Commande `lucioles run` |
+| `adapters/postgres/` | `database` (connexion, migrations SQL numérotées), `repository` (indicateurs + territoires PostGIS), `run_history` (historique des exécutions, reprise après arrêt) |
+| `cli.py` | Commandes `lucioles run`, `lucioles db migrate/status` |
 
 Règle vérifiée par un test (`tests/unit/test_architecture.py`) : `domain/` n'importe aucune bibliothèque d'E/S.
 Ajouter une capacité = un port (si nouvelle étape) + un adaptateur + son enregistrement dans
@@ -26,6 +27,14 @@ Ajouter une capacité = un port (si nouvelle étape) + un adaptateur + son enreg
 
 Une exécution : un espace de travail dédié, un statut par étape (`pending`, `running`, `succeeded`,
 `failed`, `skipped`) ; une étape en échec arrête la chaîne et les suivantes sont `skipped`.
+
+## Base de données
+
+Schéma (`adapters/postgres/migrations/`) : `territory` (code, nom, géométrie `EPSG:4326`), `indicator`,
+`indicator_value` (clé `(indicateur, période, territoire)`, période = 1er jour du mois), vue `indicator_map`
+(valeurs + géométrie), `chain_run` et `step_run` (historique). L'écriture des indicateurs est transactionnelle
+et remplace les valeurs de l'(indicateur, période). Au redémarrage du service, `PostgresRunStore.recover_interrupted()`
+marque en échec les exécutions restées en cours.
 
 ## Écarts avec Lucioles-lab
 

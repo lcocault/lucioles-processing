@@ -10,7 +10,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from .model import Dataset, IndicatorValue, Period, ProductFile
+from .model import Dataset, IndicatorValue, Period, ProductFile, Territory
 from .run import ChainRun
 
 #: Données externes récupérées : nom de la source -> fichier local.
@@ -55,10 +55,16 @@ class IndicatorCalculator(ABC):
 
 
 class IndicatorRepository(ABC):
-    """Étape 4 : enregistre les indicateurs. L'écriture doit être idempotente par (indicateur, période)."""
+    """Étape 4 : enregistre les indicateurs (et les territoires sur lesquels ils portent).
+
+L'écriture est idempotente : relancer pour un même (indicateur, période) remplace les valeurs
+précédentes, sans doublon.
+"""
 
     @abstractmethod
-    def save(self, ctx: StepContext, values: Sequence[IndicatorValue]) -> None: ...
+    def save(
+        self, ctx: StepContext, territories: Sequence[Territory], values: Sequence[IndicatorValue]
+    ) -> None: ...
 
 
 class ProductBuilder(ABC):

@@ -1,0 +1,23 @@
+# Base PostgreSQL/PostGIS pour le développement et les tests d'intégration.
+#   docker compose up -d db
+#   export LUCIOLES_DATABASE_URL=postgresql://lucioles:lucioles@localhost:5432/lucioles
+#   export LUCIOLES_TEST_DATABASE_URL=postgresql://lucioles:lucioles@localhost:5432/postgres
+#   lucioles db migrate
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: lucioles
+      POSTGRES_PASSWORD: lucioles
+      POSTGRES_DB: lucioles
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lucioles"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  pgdata:

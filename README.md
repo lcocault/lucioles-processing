@@ -34,6 +34,20 @@ fichiers, distribution). Voir [configs/air_quality.example.yaml](configs/air_qua
 Chaque exécution a son espace de travail `workspace/<chaîne>/<période>/<id>/` et affiche le statut de
 chaque étape ; le code de sortie est non nul en cas d'échec (1) ou d'erreur de configuration (2).
 
+## Base de données (PostgreSQL / PostGIS)
+
+L'étape `save: {use: postgres}` enregistre les indicateurs et leurs territoires ; si `LUCIOLES_DATABASE_URL`
+est définie, `lucioles run` trace aussi l'historique des exécutions. L'URL de connexion ne figure jamais dans les
+fichiers du dépôt.
+
+```bash
+docker compose up -d db
+export LUCIOLES_DATABASE_URL=postgresql://lucioles:lucioles@localhost:5432/lucioles
+lucioles db migrate     # applique le schéma (`lucioles db status` pour l'état)
+```
+
+Tests d'intégration : définir `LUCIOLES_TEST_DATABASE_URL` (serveur avec PostGIS) ; sans elle, ils sont ignorés.
+
 ## Licence
 
 Apache 2.0, comme le laboratoire.

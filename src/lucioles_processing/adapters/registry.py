@@ -10,6 +10,8 @@ from .build import FORMATS, MapFilesBuilder
 from .calculate import WeightedSumCalculator
 from .distribute import LocalFolderDistributor, NullDistributor
 from .fetch import ConfiguredSourcesFetcher
+from .postgres.database import ENV_VAR, Database
+from .postgres.repository import PostgresIndicatorRepository
 from .read import CommuneAggregationReader
 from .repository import InMemoryRepository, NullRepository
 
@@ -32,6 +34,14 @@ def default_registry() -> Registry:
     )
     reg.register(Step.CALCULATE, "weighted_sum", lambda c: WeightedSumCalculator(c.definition.indicator))
     reg.register(Step.SAVE, "none", lambda c: NullRepository())
+    reg.register(
+        Step.SAVE,
+        "postgres",
+        # l'URL de connexion vient de l'environnement (variable nommée par `url_env`), jamais du YAML
+        lambda c: PostgresIndicatorRepository(
+            Database.from_env(env_var=c.params.get("url_env", ENV_VAR))
+        ),
+    )
     reg.register(Step.SAVE, "memory", lambda c: InMemoryRepository())
     reg.register(
         Step.BUILD,

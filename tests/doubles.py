@@ -44,8 +44,8 @@ class FakeRepository(IndicatorRepository):
     def __init__(self):
         self.saved = []
 
-    def save(self, ctx, values):
-        self.saved.append(list(values))
+    def save(self, ctx, territories, values):
+        self.saved.append((list(territories), list(values)))
 
 
 class FakeBuilder(ProductBuilder):

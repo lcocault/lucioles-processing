@@ -7,6 +7,17 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgis/postgis:16-3.4
+        env:
+          POSTGRES_USER: lucioles
+          POSTGRES_PASSWORD: lucioles
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U lucioles" --health-interval 5s --health-retries 10
+    env:
+      LUCIOLES_TEST_DATABASE_URL: postgresql://lucioles:lucioles@localhost:5432/postgres
     strategy:
       matrix:
         python-version: ["3.10", "3.12"]

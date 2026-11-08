@@ -86,7 +86,7 @@ class ChainExecutor:
             state["values"] = list(c.calculator.calculate(ctx, state["dataset"]))
 
         def save() -> None:
-            c.repository.save(ctx, state["values"])
+            c.repository.save(ctx, state["dataset"].territories, state["values"])
 
         def build() -> None:
             run.products = list(c.builder.build(ctx, state["dataset"], state["values"]))

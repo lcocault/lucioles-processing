@@ -6,6 +6,10 @@ Service hébergé exécutant des chaînes de traitement d'indicateurs environnem
 pour l'architecture). Architecture **hexagonale** : le domaine ne dépend d'aucune bibliothèque d'E/S.
 Langue du projet (code commenté, docs, messages, commits) : **français**.
 
+## Reprise de contexte
+Avant de commencer, lire [docs/open-points.md](docs/open-points.md) (ce qui reste à faire ou à valider) et
+[docs/history.md](docs/history.md) (ce qui a été fait). **Les mettre à jour à la fin de chaque session ou US.**
+
 ## Tests : impératif
 - **Toute US livrée l'est avec ses tests unitaires.** Pas de code applicatif sans test qui le couvre ;
   un correctif de bug commence par un test qui échoue.

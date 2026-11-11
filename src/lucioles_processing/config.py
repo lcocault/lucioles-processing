@@ -12,6 +12,7 @@ from typing import Any
 
 import yaml
 
+from .domain.ports import BOUNDARIES_KEY
 from .domain.run import Step
 
 METHODS = {"zonal_mean", "nearest_station"}
@@ -61,6 +62,31 @@ class IndicatorSpec:
             raise ValueError("Les couleurs OPF supposent 4 seuils (5 classes)")
 
 
+@dataclass
+class BoundariesConfig:
+    """Fond de limites administratives (communes) : à télécharger (`url`) ou déjà présent (`path`).
+
+    Les noms de champs décrivent le fichier d'entrée (par défaut : IGN ADMIN_EXPRESS). `departments`
+    restreint le calcul à certains départements (vide = tous). `refresh` : `if_changed` vérifie auprès du
+    serveur que la copie locale est à jour ; `never` utilise la copie locale sans interroger le serveur.
+    """
+
+    path: str | None = None
+    url: str | None = None
+    code_field: str = "code_insee"
+    name_field: str = "nom_officiel"
+    department_field: str = "code_insee_du_departement"
+    departments: list[str] = field(default_factory=list)
+    refresh: str = "if_changed"
+
+    def __post_init__(self) -> None:
+        if bool(self.path) == bool(self.url):
+            raise ValueError("boundaries : exactement un de 'path' ou 'url' est obligatoire")
+        if self.refresh not in ("if_changed", "never"):
+            raise ValueError(f"boundaries : refresh '{self.refresh}' inconnu (if_changed ou never)")
+        self.departments = [str(d) for d in self.departments]
+
+
 @dataclass(frozen=True)
 class StepSpec:
     """Implémentation retenue pour une étape (`use`) et ses paramètres."""
@@ -74,9 +100,12 @@ class ChainDefinition:
     name: str
     indicator: IndicatorSpec
     sources: dict[str, SourceConfig]
+    boundaries: BoundariesConfig
     steps: dict[Step, StepSpec]
 
     def __post_init__(self) -> None:
+        if BOUNDARIES_KEY in self.sources:
+            raise ValueError(f"'{BOUNDARIES_KEY}' est réservé : choisir un autre nom de source")
         unknown = set(self.indicator.weights) - set(self.sources)
         if unknown:
             raise ValueError(f"Poids définis pour des sources inconnues : {sorted(unknown)}")
@@ -89,7 +118,7 @@ def parse_chain_definition(raw: dict[str, Any]) -> ChainDefinition:
     """Construit et valide une définition à partir du contenu YAML déjà chargé."""
     if not isinstance(raw, dict):
         raise ValueError("La définition de chaîne doit être un dictionnaire YAML")  # noqa: TRY004 - erreur de configuration, traitée comme les autres
-    for key in ("chain", "indicator", "sources", "steps"):
+    for key in ("chain", "indicator", "sources", "boundaries", "steps"):
         if key not in raw:
             raise ValueError(f"Clé obligatoire absente : '{key}'")
 
@@ -113,6 +142,7 @@ def parse_chain_definition(raw: dict[str, Any]) -> ChainDefinition:
         name=str(raw["chain"]),
         indicator=IndicatorSpec(**raw["indicator"]),
         sources={n: SourceConfig(name=n, **c) for n, c in raw["sources"].items()},
+        boundaries=BoundariesConfig(**raw["boundaries"]),
         steps=steps,
     )
 

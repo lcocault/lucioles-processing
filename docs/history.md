@@ -4,6 +4,27 @@ Journal chronologique (le plus récent en premier) destiné à reprendre le trav
 conversation. À compléter à chaque US livrée. Les points non résolus sont dans [open-points.md](open-points.md) ;
 le backlog dans [user-stories/](user-stories/).
 
+## 2026-11-11 — US-1.7 Fond administratif téléchargé et vérifié (`fait`)
+- Nouvelle section `boundaries` de la définition de chaîne (`config.py`, `BoundariesConfig`) : `url` **ou** `path`,
+  champs `code_field`/`name_field`/`department_field` (défauts = IGN ADMIN_EXPRESS), `departments`, `refresh`
+  (`if_changed` | `never`). Elle est obligatoire ; les paramètres `admin` et `departments` de l'étape `read` disparaissent.
+- `adapters/download.py` : téléchargement conditionnel (`If-None-Match`/`If-Modified-Since`, métadonnées dans
+  `<fichier>.meta.json`), remplacement atomique, rejet des téléchargements tronqués, repli sur la copie locale
+  (statut `unverified`) si le serveur est injoignable ou en erreur 5xx ; une 4xx est toujours une erreur.
+  Appliqué aussi aux sources à URL (`collect.py`).
+- L'étape `fetch` récupère désormais le fond (clé réservée `boundaries`, `BOUNDARIES_KEY`) et le cache par défaut est
+  `cache/` (paramètre `cache_dir`).
+- Domaine : `FetchedFile` (chemin, origine, statut, version, SHA-256) ; `RawData` = `Mapping[str, FetchedFile]` ;
+  `Dataset.inputs` ; le manifeste contient `inputs` (provenance de chaque fichier lu, fond compris).
+- Le fond est lu avec des noms de champs configurables et exposé sous `code`/`name`/`department` ; codes de communes en
+  double et champs absents donnent des erreurs explicites. Les territoires sont identifiés par le vrai code INSEE.
+- Tests : `tests/unit/adapters/test_download.py` (serveur HTTP local `tests/http_server.py`, aucun réseau réel),
+  fetch/collect/config, e2e (téléchargement puis vérification, nouvelle version, repli hors-ligne, échec sans cache).
+- Essai réel (hors dépôt, résultats dans `tmp/real-out/`, ignoré par git) : contours open data
+  `contours-administratifs/latest/geojson/communes-1000m.geojson` (10 Mo, ETag + Last-Modified), Haute-Garonne =
+  586 communes ; 1er run : téléchargé, 2e run : « déjà à jour » (réponse 304 du vrai serveur). Mesures NO2/PM10 restées
+  synthétiques.
+
 ## 2026-11-11 — Correctif CI et validation PostGIS
 - Le job `test (3.10)` échouait dans `test_run_requires_migrated_schema` : la fixture `env` utilisait `db`,
   qui migrait la base partagée `empty_db` ; le test recevait donc une base déjà migrée.

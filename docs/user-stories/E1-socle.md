@@ -42,3 +42,14 @@ En tant qu'utilisateur, je veux conserver la CLI actuelle, qui utilise désormai
 la voie d'exécution manuelle.
 - `lucioles run --config ... --period ...` fonctionne et affiche le statut par étape.
 - Le code de sortie est non nul en cas d'échec.
+
+## US-1.7 — Fond administratif téléchargé et vérifié  `M` `fait`
+En tant qu'exploitant, je veux que le fond de limites administratives soit une donnée externe de la chaîne, récupérée
+par l'étape 1 (téléchargement, ou simple vérification que le fichier déjà téléchargé est la dernière version), afin que
+les indicateurs soient calculés sur de vraies limites communales, dont la version est tracée.
+- Section `boundaries` dans la définition (chemin ou URL, champs code/nom/département, départements retenus, `refresh`).
+- Téléchargement conditionnel (`ETag` / `Last-Modified`) : fichier inchangé → pas de retéléchargement ; changé → remplacé
+  de façon atomique ; serveur injoignable avec un fichier en cache → on l'utilise, signalé « non vérifié ».
+- Les téléchargements tronqués sont rejetés ; la provenance (origine, version, empreinte SHA-256, statut) figure dans le
+  manifeste de chaque exécution.
+- Les sources à URL bénéficient du même mécanisme.

@@ -17,6 +17,7 @@ les adaptateurs les implémentent ; un registre associe le nom d'une implémenta
 | `config.py` | `ChainDefinition` : parsing et validation du YAML |
 | `application/registry.py` | Registre des implémentations, construction des composants |
 | `application/executor.py` | `ChainExecutor` : enchaîne les étapes, trace les statuts, notifie les écouteurs |
+| `adapters/download.py` | Téléchargement conditionnel (ETag/Last-Modified), repli sur la copie locale |
 | `adapters/` | `fetch` (fichiers/URL), `read` (agrégation par commune), `calculate` (somme pondérée), `repository` (aucun/mémoire), `build` (GPKG, GeoJSON, KML, PMTiles, manifeste), `distribute` (dossier local) |
 | `adapters/postgres/` | `database` (connexion, migrations SQL numérotées), `repository` (indicateurs + territoires PostGIS), `run_history` (historique des exécutions, reprise après arrêt) |
 | `cli.py` | Commandes `lucioles run`, `lucioles db migrate/status` |

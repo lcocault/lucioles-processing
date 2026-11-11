@@ -14,6 +14,13 @@
 - Mono-instance ou plusieurs workers (file d'exécution, verrous).
 
 ## Dette technique et risques connus
+- **Contours à 1 km de simplification** : le fichier `communes-1000m` est très simplifié (médiane ~7 sommets par commune).
+  Pour une carte plus fidèle, passer à `communes-100m` ou `communes-50m` (plus lourds) ou à IGN ADMIN_EXPRESS.
+- **Archives non gérées** : IGN ADMIN_EXPRESS est distribué en `.7z` ; `boundaries.url` doit viser un fichier lisible
+  directement (GeoJSON, GPKG). Ajouter l'extraction (zip/7z) si l'on veut télécharger ADMIN_EXPRESS automatiquement.
+- **Provenance non persistée en base** : le fond utilisé (version, SHA-256) figure dans le manifeste mais pas dans
+  `chain_run` (E2) ; à ajouter si l'on veut l'interroger depuis l'API/l'interface.
+- Le champ `latest` de l'URL open data change de contenu avec le temps : la version effective est dans le manifeste.
 - `tests/e2e` et `tests/integration` : le script de comparaison avec l'ancienne version (E1) n'est pas conservé en test.
 - Les exports perdent les colonnes ADMIN_EXPRESS autres que code/nom/département.
 - `.github/workflows/monthly.yml` : récupération d'ADMIN_EXPRESS, tippecanoe et pmtiles toujours en TODO.

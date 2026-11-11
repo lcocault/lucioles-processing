@@ -8,12 +8,14 @@ from psycopg import sql
 from shapely.geometry import Polygon
 
 from lucioles_processing.adapters.postgres.database import Database
+from tests.http_server import FakeServer
 
 
 @pytest.fixture
 def communes():
     return gpd.GeoDataFrame(
         {
+            "code_insee": ["31001", "31002"],
             "code_insee_du_departement": ["31", "31"],
             "nom_officiel": ["Commune A", "Commune B"],
             "geometry": [
@@ -88,3 +90,11 @@ def db(empty_db):
     """Base avec le schéma à jour."""
     empty_db.migrate()
     return empty_db
+
+
+@pytest.fixture
+def http_server():
+    """Serveur HTTP local (ETag, Last-Modified, requêtes conditionnelles) : aucun accès réseau réel."""
+    server = FakeServer()
+    yield server
+    server.close()

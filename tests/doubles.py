@@ -4,6 +4,7 @@ from lucioles_processing.application.registry import Components, Registry
 from lucioles_processing.config import ChainDefinition, parse_chain_definition
 from lucioles_processing.domain.model import (
     Dataset,
+    FetchedFile,
     IndicatorValue,
     Observation,
     ProductFile,
@@ -25,7 +26,7 @@ class FakeFetcher(DataFetcher):
     def fetch(self, ctx):
         f = ctx.directory("raw") / "a.txt"
         f.write_text("a")
-        return {"a": f}
+        return {"a": FetchedFile.local(f)}
 
 
 class FakeReader(DataReader):
@@ -101,6 +102,7 @@ def raw_definition(**steps) -> dict:
         "chain": "demo",
         "indicator": {"name": "ind", "weights": {"a": 1.0}, "thresholds": [1, 2, 3, 4]},
         "sources": {"a": {"method": "zonal_mean", "path": "a.tif"}},
+        "boundaries": {"path": "communes.gpkg"},
         "steps": {
             "fetch": {"use": "fake"}, "read": {"use": "fake"},
             "calculate": {"use": "fake"}, "build": {"use": "fake"},

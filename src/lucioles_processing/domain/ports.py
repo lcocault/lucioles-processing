@@ -10,11 +10,14 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
 
-from .model import Dataset, IndicatorValue, Period, ProductFile, Territory
+from .model import Dataset, FetchedFile, IndicatorValue, Period, ProductFile, Territory
 from .run import ChainRun
 
-#: Données externes récupérées : nom de la source -> fichier local.
-RawData = Mapping[str, Path]
+#: Clé de `RawData` du fond de limites administratives (ne peut donc pas être un nom de source).
+BOUNDARIES_KEY = "boundaries"
+
+#: Données externes récupérées : nom de la source (ou `BOUNDARIES_KEY`) -> fichier local et provenance.
+RawData = Mapping[str, FetchedFile]
 
 
 @dataclass(frozen=True)

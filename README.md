@@ -31,7 +31,9 @@ lucioles run --config configs/air_quality.example.yaml --period 2026-10
 Une **chaîne de traitement** est définie en YAML : l'indicateur, ses sources, et l'implémentation (`use`)
 retenue pour chacune des six étapes (récupération, lecture, calcul, enregistrement, production des
 fichiers, distribution). Voir [configs/air_quality.example.yaml](configs/air_quality.example.yaml).
-Chaque exécution a son espace de travail `workspace/<chaîne>/<période>/<id>/` et affiche le statut de
+Les limites communales (`boundaries`) sont téléchargées par l'étape 1 puis simplement revérifiées à chaque
+exécution (`ETag`/`Last-Modified`) : le fichier n'est retéléchargé que s'il a changé ; leur version est tracée dans
+le manifeste. Chaque exécution a son espace de travail `workspace/<chaîne>/<période>/<id>/` et affiche le statut de
 chaque étape ; le code de sortie est non nul en cas d'échec (1) ou d'erreur de configuration (2).
 
 ## Base de données (PostgreSQL / PostGIS)

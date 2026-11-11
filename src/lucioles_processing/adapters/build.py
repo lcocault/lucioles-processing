@@ -63,6 +63,12 @@ class MapFilesBuilder(ProductBuilder):
                     "communes": len(gdf),
                     "missing": int(gdf["opf_level"].isna().sum()),
                     "sources": {n: str(s.path or s.url) for n, s in self.definition.sources.items()},
+                    "inputs": {
+                        name: {
+                            "origin": f.origin, "status": f.status, "version": f.version, "sha256": f.sha256,
+                        }
+                        for name, f in dataset.inputs.items()
+                    },
                 },
                 indent=2,
             ),

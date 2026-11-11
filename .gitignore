@@ -11,3 +11,6 @@ data/**
 !data/inputs/README.md
 output/
 cache/
+
+# Fichiers temporaires et résultats d'essais locaux
+tmp/

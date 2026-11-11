@@ -9,6 +9,18 @@ indicator:
     pm10: 0.4
   thresholds: [10, 20, 30, 40]   # 4 seuils -> niveaux OPF 0 (bon) à 4 (mauvais)
 
+# Limites communales : téléchargées (open data, contours simplifiés à 1 km), puis simplement vérifiées à chaque
+# exécution (ETag / Last-Modified) : on ne retélécharge que si le fichier a changé sur le serveur.
+# Pour IGN ADMIN_EXPRESS déjà présent en local : `path: data/inputs/ADMIN-EXPRESS.gpkg` et les champs
+# par défaut (code_insee, nom_officiel, code_insee_du_departement).
+boundaries:
+  url: https://etalab-datasets.geo.data.gouv.fr/contours-administratifs/latest/geojson/communes-1000m.geojson
+  code_field: code
+  name_field: nom
+  department_field: departement
+  departments: ["31"]           # vide = toute la France (long)
+  refresh: if_changed           # never : utiliser la copie locale sans interroger le serveur
+
 sources:
   no2:
     method: zonal_mean
@@ -26,12 +38,9 @@ steps:
   fetch:
     use: configured_sources
     params:
-      cache_dir: cache            # téléchargements réutilisés d'une exécution à l'autre
+      cache_dir: cache            # téléchargements conservés d'une exécution à l'autre (défaut : cache)
   read:
     use: commune_aggregation
-    params:
-      admin: data/inputs/ADMIN-EXPRESS.gpkg
-      departments: ["31"]         # vide = toute la France (long)
   calculate:
     use: weighted_sum
   save:

@@ -1,6 +1,7 @@
 import pytest
 
 from lucioles_processing.config import (
+    BoundariesConfig,
     IndicatorSpec,
     SourceConfig,
     load_chain_definition,
@@ -29,7 +30,7 @@ def test_step_params_are_kept():
     assert d.steps[Step.BUILD].params == {"formats": ["kml"]}
 
 
-@pytest.mark.parametrize("missing", ["chain", "indicator", "sources", "steps"])
+@pytest.mark.parametrize("missing", ["chain", "indicator", "sources", "boundaries", "steps"])
 def test_missing_top_level_key(missing):
     raw = raw_definition()
     del raw[missing]
@@ -85,3 +86,35 @@ def test_nearest_station_requires_dims():
 def test_thresholds_must_be_sorted():
     with pytest.raises(ValueError):
         IndicatorSpec(name="i", weights={}, thresholds=[4, 3, 2, 1])
+
+
+def test_example_boundaries_are_downloaded_by_default():
+    b = load_chain_definition("configs/air_quality.example.yaml").boundaries
+    assert b.url.startswith("https://") and b.path is None
+    assert (b.code_field, b.name_field, b.department_field) == ("code", "nom", "departement")
+    assert b.refresh == "if_changed" and b.departments == ["31"]
+
+
+def test_boundaries_defaults_are_admin_express():
+    b = BoundariesConfig(path="x.gpkg", departments=[31, "2A"])
+    assert (b.code_field, b.name_field, b.department_field) == (
+        "code_insee", "nom_officiel", "code_insee_du_departement")
+    assert b.departments == ["31", "2A"] and b.refresh == "if_changed"
+
+
+@pytest.mark.parametrize("kwargs", [{}, {"path": "a", "url": "http://x"}])
+def test_boundaries_need_exactly_one_origin(kwargs):
+    with pytest.raises(ValueError, match="exactement un"):
+        BoundariesConfig(**kwargs)
+
+
+def test_boundaries_unknown_refresh():
+    with pytest.raises(ValueError, match="refresh"):
+        BoundariesConfig(path="a", refresh="parfois")
+
+
+def test_boundaries_is_a_reserved_source_name():
+    raw = raw_definition()
+    raw["sources"]["boundaries"] = {"method": "zonal_mean", "path": "x.tif"}
+    with pytest.raises(ValueError, match="réservé"):
+        parse_chain_definition(raw)

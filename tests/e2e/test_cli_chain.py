@@ -13,6 +13,12 @@ pytestmark = pytest.mark.e2e
 CHAIN = """
 chain: air
 indicator: {{name: air, weights: {{pm10: 1.0}}, thresholds: [10, 20, 30, 40]}}
+boundaries:
+  url: {url}/communes.geojson
+  code_field: code_insee
+  name_field: nom_officiel
+  department_field: code_insee_du_departement
+  departments: ["31"]
 sources:
   pm10:
     method: nearest_station
@@ -20,10 +26,10 @@ sources:
     field: pm10
     dims: [lon, lat]
 steps:
-  fetch: {{use: configured_sources}}
-  read:
-    use: commune_aggregation
-    params: {{admin: {admin}, departments: ["31"]}}
+  fetch:
+    use: configured_sources
+    params: {{cache_dir: {cache}}}
+  read: {{use: commune_aggregation}}
   calculate: {{use: weighted_sum}}
   build:
     use: map_files
@@ -35,14 +41,13 @@ steps:
 
 
 @pytest.fixture
-def env(communes, tmp_path):
-    admin = tmp_path / "admin.gpkg"
-    communes.to_file(admin, driver="GPKG")
+def env(communes, tmp_path, http_server):
+    http_server.files["/communes.geojson"] = communes.to_json().encode()
     pd.DataFrame({"lon": [1.05, 1.25], "lat": [43.05, 43.25], "pm10": [5.0, 45.0]}).to_csv(
         tmp_path / "pm10_2026-10.csv", sep=";", index=False
     )
     cfg = tmp_path / "chain.yaml"
-    cfg.write_text(CHAIN.format(data=tmp_path, admin=admin, out=tmp_path / "out"))
+    cfg.write_text(CHAIN.format(data=tmp_path, url=http_server.base_url, cache=tmp_path / "cache", out=tmp_path / "out"))
     return tmp_path, cfg
 
 
@@ -97,6 +102,50 @@ def test_unknown_implementation_is_a_configuration_error(env, capsys):
 
 def test_missing_required_param_is_a_configuration_error(env, capsys):
     tmp_path, cfg = env
-    cfg.write_text(cfg.read_text().replace("admin:", "adminn:"))
+    cfg.write_text(cfg.read_text().replace("directory:", "dossier:"))
     assert run_cli(cfg, tmp_path) == 2
-    assert "paramètre 'admin' manquant" in capsys.readouterr().err
+    assert "paramètre 'directory' manquant" in capsys.readouterr().err
+
+
+def manifest(tmp_path):
+    return json.loads((tmp_path / "out" / "air" / "2026-10" / "manifest.json").read_text())
+
+
+def test_boundaries_are_downloaded_then_only_verified(env, http_server):
+    tmp_path, cfg = env
+    assert run_cli(cfg, tmp_path) == 0
+    first = manifest(tmp_path)["inputs"]["boundaries"]
+    assert first["status"] == "downloaded" and first["origin"] == http_server.url("/communes.geojson")
+    assert run_cli(cfg, tmp_path) == 0
+    second = manifest(tmp_path)["inputs"]["boundaries"]
+    assert second["status"] == "unchanged" and second["sha256"] == first["sha256"]
+    assert [p for p, _ in http_server.requests].count("/communes.geojson") == 2  # vérifié, pas retéléchargé
+    assert http_server.requests[-1][1].get("If-None-Match")  # requête conditionnelle
+
+
+def test_a_new_boundaries_version_is_picked_up(env, http_server, communes):
+    tmp_path, cfg = env
+    assert run_cli(cfg, tmp_path) == 0
+    old = manifest(tmp_path)["inputs"]["boundaries"]
+    http_server.files["/communes.geojson"] = communes.iloc[:1].to_json().encode()  # une commune de moins
+    assert run_cli(cfg, tmp_path) == 0
+    new = manifest(tmp_path)
+    assert new["inputs"]["boundaries"]["status"] == "downloaded"
+    assert new["inputs"]["boundaries"]["sha256"] != old["sha256"]
+    assert new["communes"] == 1
+
+
+def test_unreachable_server_falls_back_on_the_cached_boundaries(env, http_server, capsys):
+    tmp_path, cfg = env
+    assert run_cli(cfg, tmp_path) == 0
+    http_server.status = 503
+    assert run_cli(cfg, tmp_path) == 0
+    assert manifest(tmp_path)["inputs"]["boundaries"]["status"] == "unverified"  # signalé dans la traçabilité
+
+
+def test_unreachable_server_without_cache_fails_at_fetch(env, http_server, capsys):
+    tmp_path, cfg = env
+    http_server.status = 503
+    assert run_cli(cfg, tmp_path) == 1
+    printed = capsys.readouterr().out
+    assert "fetch" in printed and "ÉCHEC" in printed and printed.count("ignorée") == 5

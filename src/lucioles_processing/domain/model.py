@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -36,6 +37,26 @@ class Period:
 
 
 @dataclass(frozen=True)
+class FetchedFile:
+    """Fichier d'entrée récupéré, avec sa provenance (pour la traçabilité des résultats).
+
+    `status` : `local` (fichier utilisé en place), `downloaded` (téléchargé), `unchanged` (déjà à jour,
+    vérifié auprès du serveur), `cached` (utilisé sans vérification, à la demande) ou `unverified`
+    (serveur injoignable : copie en cache utilisée sans pouvoir vérifier sa version).
+    """
+
+    path: Path
+    origin: str
+    status: str = "local"
+    version: str | None = None
+    sha256: str | None = None
+
+    @classmethod
+    def local(cls, path: Path) -> FetchedFile:
+        return cls(path=Path(path), origin=str(path))
+
+
+@dataclass(frozen=True)
 class Territory:
     """Un territoire (commune) et sa géométrie en WKT, coordonnées lon/lat (EPSG:4326)."""
 
@@ -66,6 +87,7 @@ class Dataset:
     territories: tuple[Territory, ...]
     sources: tuple[str, ...]
     observations: tuple[Observation, ...]
+    inputs: Mapping[str, FetchedFile] = field(default_factory=dict)  # provenance des fichiers lus
 
     def __post_init__(self) -> None:
         codes = [t.code for t in self.territories]

@@ -22,15 +22,15 @@ def default_registry() -> Registry:
         Step.FETCH,
         "configured_sources",
         lambda c: ConfiguredSourcesFetcher(
-            c.definition.sources, Path(c.params["cache_dir"]) if c.params.get("cache_dir") else None
+            c.definition.sources,
+            c.definition.boundaries,
+            Path(c.params["cache_dir"]) if c.params.get("cache_dir") else Path("cache"),
         ),
     )
     reg.register(
         Step.READ,
         "commune_aggregation",
-        lambda c: CommuneAggregationReader(
-            c.definition.sources, Path(c.require("admin")), [str(d) for d in c.params.get("departments", [])]
-        ),
+        lambda c: CommuneAggregationReader(c.definition.sources, c.definition.boundaries),
     )
     reg.register(Step.CALCULATE, "weighted_sum", lambda c: WeightedSumCalculator(c.definition.indicator))
     reg.register(Step.SAVE, "none", lambda c: NullRepository())

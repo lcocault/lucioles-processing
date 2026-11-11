@@ -14,6 +14,8 @@ pytestmark = [pytest.mark.e2e, pytest.mark.integration]
 CHAIN = """
 chain: air
 indicator: {{name: air, weights: {{pm10: 1.0}}, thresholds: [10, 20, 30, 40]}}
+boundaries:
+  path: {admin}
 sources:
   pm10:
     method: nearest_station
@@ -22,9 +24,7 @@ sources:
     dims: [lon, lat]
 steps:
   fetch: {{use: configured_sources}}
-  read:
-    use: commune_aggregation
-    params: {{admin: {admin}}}
+  read: {{use: commune_aggregation}}
   calculate: {{use: weighted_sum}}
   save: {{use: postgres}}
   build:

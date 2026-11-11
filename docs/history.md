@@ -4,6 +4,14 @@ Journal chronologique (le plus récent en premier) destiné à reprendre le trav
 conversation. À compléter à chaque US livrée. Les points non résolus sont dans [open-points.md](open-points.md) ;
 le backlog dans [user-stories/](user-stories/).
 
+## 2026-11-11 — Correctif CI et validation PostGIS
+- Le job `test (3.10)` échouait dans `test_run_requires_migrated_schema` : la fixture `env` utilisait `db`,
+  qui migrait la base partagée `empty_db` ; le test recevait donc une base déjà migrée.
+- La fixture `empty_db_factory` crée des bases indépendantes et les supprime en fin de test. Le test utilise une
+  seconde base pour vérifier le refus d'exécuter une chaîne sans migrations.
+- Validation sur PostGIS 16 : `pytest` (139 tests) et `ruff check .` réussis.
+- **US-2.1 et US-2.2 passent à `fait`** après validation des migrations et du dépôt PostgreSQL sur PostGIS.
+
 ## 2026-11-08 — E2 Persistance PostgreSQL/PostGIS (code écrit, validation PostGIS en attente)
 - **US-2.1 Schéma et migrations** (`en cours`) : migrations SQL numérotées dans
   `src/lucioles_processing/adapters/postgres/migrations/` ; tables `territory`, `indicator`, `indicator_value`,

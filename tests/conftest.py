@@ -54,20 +54,33 @@ def admin_url():
 
 
 @pytest.fixture
-def empty_db(admin_url):
-    """Base vide (sans schéma), supprimée après le test."""
-    name = f"lucioles_test_{uuid.uuid4().hex[:12]}"
-    with psycopg.connect(admin_url, autocommit=True) as conn:
-        conn.execute(
-            sql.SQL("CREATE DATABASE {} TEMPLATE template0 ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C'").format(
-                sql.Identifier(name)
+def empty_db_factory(admin_url):
+    """Crée des bases vides distinctes, supprimées après le test."""
+    names = []
+
+    def create():
+        name = f"lucioles_test_{uuid.uuid4().hex[:12]}"
+        with psycopg.connect(admin_url, autocommit=True) as conn:
+            conn.execute(
+                sql.SQL("CREATE DATABASE {} TEMPLATE template0 ENCODING 'UTF8' LC_COLLATE 'C' LC_CTYPE 'C'").format(
+                    sql.Identifier(name)
+                )
             )
-        )
+        names.append(name)
+        return Database(_with_dbname(admin_url, name))
+
     try:
-        yield Database(_with_dbname(admin_url, name))
+        yield create
     finally:
         with psycopg.connect(admin_url, autocommit=True) as conn:
-            conn.execute(sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(name)))
+            for name in names:
+                conn.execute(sql.SQL("DROP DATABASE IF EXISTS {} WITH (FORCE)").format(sql.Identifier(name)))
+
+
+@pytest.fixture
+def empty_db(empty_db_factory):
+    """Base vide (sans schéma), supprimée après le test."""
+    return empty_db_factory()
 
 
 @pytest.fixture

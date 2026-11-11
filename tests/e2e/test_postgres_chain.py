@@ -81,8 +81,8 @@ def test_failure_is_recorded_in_history(env, db):
         assert conn.execute("SELECT count(*) FROM indicator_value").fetchone()[0] == 0
 
 
-def test_run_requires_migrated_schema(env, empty_db, monkeypatch, capsys):
+def test_run_requires_migrated_schema(env, empty_db_factory, monkeypatch, capsys):
     cfg, tmp_path = env
-    monkeypatch.setenv("LUCIOLES_DATABASE_URL", empty_db.url)
+    monkeypatch.setenv("LUCIOLES_DATABASE_URL", empty_db_factory().url)
     assert run_cli(cfg, tmp_path) == 2
     assert "lucioles db migrate" in capsys.readouterr().err

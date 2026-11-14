@@ -53,3 +53,14 @@ les indicateurs soient calculés sur de vraies limites communales, dont la versi
 - Les téléchargements tronqués sont rejetés ; la provenance (origine, version, empreinte SHA-256, statut) figure dans le
   manifeste de chaque exécution.
 - Les sources à URL bénéficient du même mécanisme.
+
+## US-1.8 — Calculateurs des indicateurs réels  `M` `à faire`
+En tant que chargé d'indicateurs, je veux les calculs réellement utilisés par le laboratoire afin de produire les mêmes cartes.
+- `worst_band` : sous-indice par source (bornes propres à chacune), indicateur = maximum, puis niveau OPF par seuils.
+- Niveaux inversés (pollution lumineuse) ; combinaison `valeur × superficie / population`.
+- Tendance : comparaison de deux périodes (sources début/fin) avec dégradation légère/forte.
+- Reproduit les valeurs des notebooks `EO-map-*` sur un jeu de référence.
+
+## US-1.9 — Périodes annuelles  `M` `à faire`
+En tant qu'exploitant, je veux traiter des données annuelles (INERIS, pollution lumineuse) afin de ne pas les forcer dans un mois.
+- `Period` accepte `AAAA` en plus de `AAAA-MM` ; placeholders `{year}` ; `previous-year` en CLI ; stockage et S3 compatibles.

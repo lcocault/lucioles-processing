@@ -3,6 +3,24 @@
 À jour au 2026-11-11. Retirer un point une fois résolu (et le noter dans [history.md](history.md)).
 
 ## À faire en priorité
+0. **Première chaîne réelle (bloque l'exploitation sur AlwaysData)** — le déploiement et la publication S3 sont prêts et
+   testés avec des données synthétiques ; il manque la chaîne réelle. Écarts constatés avec le laboratoire
+   (`Lucioles-lab/notebooks/EO-map-*.ipynb`) :
+   - *Air, volet quantitatif* : l'indicateur est le **pire sous-indice ATMO** parmi PM2,5/PM10/NO2/O3 (bornes par polluant,
+     puis niveau OPF par seuils `[0,1,2,3,5]`), pas une somme pondérée → nouveau calculateur à écrire.
+   - *Pollution lumineuse* : valeur brute du raster, niveaux **inversés** (`4 - idx`, bornes `[0,2,3,4,6]`) ; variante
+     pondérée `valeur × superficie / population` (champs d'ADMIN_EXPRESS `infos_communes`).
+   - *Air, volet tendance* : compare deux années (2009 et 2024) → plusieurs sources par polluant et logique dédiée.
+   - *Sources annuelles* : réanalyses INERIS en NetCDF (`Reanalysed_FRA_<année>_<polluant>_avgannual…nc`), GeoTIFF
+     `cdn_france_2023.tif` ; or `Period` ne connaît que le **mois** → décider d'une période annuelle.
+   - *URL de téléchargement* de ces fichiers inconnues (fichiers locaux `D:\OPF_CNES\Data\…` dans les notebooks).
+   - Fond administratif : le notebook utilise ADMIN_EXPRESS (`infos_communes.gpkg`, Lambert-93) ; l'exemple open data
+     (`communes-1000m`) ne contient ni population ni superficie.
+   Backlog correspondant : US-1.8 et US-1.9 (`docs/user-stories/E1-socle.md`).
+0b. **Valider sur le vrai AlwaysData** : disque de l'offre (≥ ~2 Go), version de Python, `CREATE EXTENSION postgis`
+   (non vérifié), puis suivre `docs/DEPLOIEMENT-ALWAYSDATA.md` (test de fumée) avant la première chaîne réelle.
+0c. **Lecture publique des résultats S3** : bucket privé par défaut ; choisir CloudFront, URL présignées ou lecture publique
+   d'un préfixe. Publication sur cartes.gouv.fr reportée (voir E5).
 1. **Itération suivante : E3** (service en tâche de fond, API REST OpenAPI, planification) — voir
    [user-stories/E3-declenchement.md](user-stories/E3-declenchement.md). Au démarrage du service, appeler
    `PostgresRunStore.recover_interrupted()`.

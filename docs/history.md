@@ -4,6 +4,22 @@ Journal chronologique (le plus récent en premier) destiné à reprendre le trav
 conversation. À compléter à chaque US livrée. Les points non résolus sont dans [open-points.md](open-points.md) ;
 le backlog dans [user-stories/](user-stories/).
 
+## 2026-11-14 — Préparation du déploiement AlwaysData et publication S3
+- **US-5.1b `fait`** : adaptateur `distribute: s3` (`adapters/s3.py`, boto3 en extra `[s3]`) : `<préfixe>/<chaîne>/<période>/…`,
+  types MIME, `latest.json` qui ne régresse jamais, identifiants par l'environnement AWS standard, `endpoint_url` possible.
+  Testé avec moto (S3 simulé) en unitaire et e2e, et par HTTP contre `moto_server` (essai local, pas AWS).
+- Déploiement sans Docker (AlwaysData ne le propose pas sur l'offre publique) : `deploy/alwaysdata/{install.sh,run-chain.sh,env.example}`
+  (installation par SSH, journal, verrou `flock`, purge des espaces de travail > N jours), guide
+  `docs/DEPLOIEMENT-ALWAYSDATA.md`. `install.sh` vérifié en local dans un dossier vierge (1 min 16 s).
+- `lucioles run --period previous-month|current-month` pour les tâches planifiées ; `${VAR}` / `${VAR:-défaut}` dans les
+  définitions de chaîne ; `lucioles sample-data` (mesures **synthétiques**, Haute-Garonne) et `configs/smoke.yaml`
+  (vraies limites communales + publication sous `smoke/`).
+- matplotlib retiré (conversion de couleur KML sans dépendance, sorties identiques) : installation de production ≈ **700 Mo**
+  (mesuré), à comparer au disque de l'offre.
+- Essai complet local : install → sample-data → `run-chain.sh smoke.yaml` → bucket simulé : 6 étapes OK, 586 communes,
+  rejouer une période plus ancienne laisse `latest.json` inchangé.
+- Analyse du laboratoire (`Lucioles-lab/notebooks`) : les indicateurs réels ne sont **pas** des sommes pondérées (voir points ouverts).
+
 ## 2026-11-11 — US-1.7 Fond administratif téléchargé et vérifié (`fait`)
 - Nouvelle section `boundaries` de la définition de chaîne (`config.py`, `BoundariesConfig`) : `url` **ou** `path`,
   champs `code_field`/`name_field`/`department_field` (défauts = IGN ADMIN_EXPRESS), `departments`, `refresh`

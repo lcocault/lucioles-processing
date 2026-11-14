@@ -36,6 +36,12 @@ exécution (`ETag`/`Last-Modified`) : le fichier n'est retéléchargé que s'il 
 le manifeste. Chaque exécution a son espace de travail `workspace/<chaîne>/<période>/<id>/` et affiche le statut de
 chaque étape ; le code de sortie est non nul en cas d'échec (1) ou d'erreur de configuration (2).
 
+## Déploiement
+
+Hébergement AlwaysData (SSH + tâche planifiée) avec publication dans un bucket S3 : voir
+[docs/DEPLOIEMENT-ALWAYSDATA.md](docs/DEPLOIEMENT-ALWAYSDATA.md). Test d'installation :
+`lucioles sample-data` puis `configs/smoke.yaml` (mesures synthétiques).
+
 ## Base de données (PostgreSQL / PostGIS)
 
 L'étape `save: {use: postgres}` enregistre les indicateurs et leurs territoires ; si `LUCIOLES_DATABASE_URL`

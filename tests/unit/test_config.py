@@ -118,3 +118,37 @@ def test_boundaries_is_a_reserved_source_name():
     raw["sources"]["boundaries"] = {"method": "zonal_mean", "path": "x.tif"}
     with pytest.raises(ValueError, match="réservé"):
         parse_chain_definition(raw)
+
+
+def test_expand_env_in_nested_structures():
+    from lucioles_processing.config import expand_env
+
+    env = {"BUCKET": "mon-bucket", "EMPTY": ""}
+    raw = {"a": "${BUCKET}", "b": ["x-${BUCKET}-y", 3], "c": {"d": "${MISSING:-def}", "e": "${EMPTY:-vide}"}}
+    assert expand_env(raw, env) == {"a": "mon-bucket", "b": ["x-mon-bucket-y", 3], "c": {"d": "def", "e": "vide"}}
+
+
+def test_expand_env_leaves_period_placeholders_alone():
+    from lucioles_processing.config import expand_env
+
+    assert expand_env("data/no2_{period}_${Y:-2026}.tif", {}) == "data/no2_{period}_2026.tif"
+
+
+def test_expand_env_missing_variable_is_explicit():
+    from lucioles_processing.config import expand_env
+
+    with pytest.raises(ValueError, match="LUCIOLES_S3_BUCKET"):
+        expand_env({"bucket": "${LUCIOLES_S3_BUCKET}"}, {})
+
+
+def test_load_chain_definition_expands_env(tmp_path, monkeypatch):
+    import yaml
+
+    raw = raw_definition(distribute={"use": "s3", "params": {"bucket": "${LUCIOLES_S3_BUCKET}"}})
+    path = tmp_path / "c.yaml"
+    path.write_text(yaml.safe_dump(raw))
+    monkeypatch.setenv("LUCIOLES_S3_BUCKET", "bucket-prod")
+    assert load_chain_definition(path).steps[Step.DISTRIBUTE].params == {"bucket": "bucket-prod"}
+    monkeypatch.delenv("LUCIOLES_S3_BUCKET")
+    with pytest.raises(ValueError, match="LUCIOLES_S3_BUCKET"):
+        load_chain_definition(path)

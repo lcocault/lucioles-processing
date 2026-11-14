@@ -1,0 +1,45 @@
+# Chaîne de TEST d'installation : vraies limites communales (téléchargées), mesures SYNTHÉTIQUES.
+# Préparer les données : lucioles sample-data --period 2026-10
+# Variables d'environnement : LUCIOLES_S3_BUCKET (obligatoire) et les identifiants AWS (voir deploy/alwaysdata/env.example).
+# Tout est publié sous le préfixe `smoke/` pour ne jamais se mélanger aux publications réelles.
+chain: smoke_test
+
+indicator:
+  name: smoke_test
+  weights: {no2: 0.6, pm10: 0.4}
+  thresholds: [15, 25, 35, 45]
+
+boundaries:
+  url: https://etalab-datasets.geo.data.gouv.fr/contours-administratifs/latest/geojson/communes-1000m.geojson
+  code_field: code
+  name_field: nom
+  department_field: departement
+  departments: ["31"]
+
+sources:
+  no2:
+    method: zonal_mean
+    path: data/inputs/no2_{period}.tif
+    condition: "data > 0"
+  pm10:
+    method: nearest_station
+    path: data/inputs/pm10_{period}.csv
+    field: pm10
+    dims: [longitude, latitude]
+    condition: "valid == 1"
+
+steps:
+  fetch:
+    use: configured_sources
+    params: {cache_dir: cache}
+  read: {use: commune_aggregation}
+  calculate: {use: weighted_sum}
+  build:
+    use: map_files
+    params: {formats: [gpkg, geojson, kml]}   # pmtiles : nécessite tippecanoe et pmtiles
+  distribute:
+    use: s3
+    params:
+      bucket: ${LUCIOLES_S3_BUCKET}
+      prefix: smoke
+      region: ${AWS_DEFAULT_REGION:-eu-west-3}

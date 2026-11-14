@@ -6,6 +6,9 @@ ses sources, et l'implémentation (`use`) retenue pour chacune des six étapes.
 
 from __future__ import annotations
 
+import os
+import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -147,5 +150,34 @@ def parse_chain_definition(raw: dict[str, Any]) -> ChainDefinition:
     )
 
 
+_ENV_REF = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(?::-([^}]*))?\}")
+
+
+def expand_env(value: Any, environ: Mapping[str, str] | None = None) -> Any:
+    """Remplace `${VAR}` et `${VAR:-défaut}` dans toutes les chaînes d'une structure YAML.
+
+    Permet de garder des définitions génériques (nom du bucket, dossiers...) et de ne jamais écrire de
+    secret dans un fichier versionné. Une variable absente sans valeur par défaut est une erreur.
+    """
+    environ = os.environ if environ is None else environ
+    if isinstance(value, str):
+
+        def replace(match: re.Match) -> str:
+            name, default = match.group(1), match.group(2)
+            if name in environ and environ[name] != "":
+                return environ[name]
+            if default is not None:
+                return default
+            raise ValueError(f"Variable d'environnement {name} absente (référencée par ${{{name}}})")
+
+        return _ENV_REF.sub(replace, value)
+    if isinstance(value, list):
+        return [expand_env(v, environ) for v in value]
+    if isinstance(value, dict):
+        return {k: expand_env(v, environ) for k, v in value.items()}
+    return value
+
+
 def load_chain_definition(path: str | Path) -> ChainDefinition:
-    return parse_chain_definition(yaml.safe_load(Path(path).read_text(encoding="utf-8")))
+    raw = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    return parse_chain_definition(expand_env(raw))

@@ -58,6 +58,10 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--workspace", type=Path, default=Path("workspace"), help="Racine des espaces de travail")
     p.add_argument("-v", "--verbose", action="store_true")
 
+    sd = sub.add_parser("sample-data", help="Écrit des données d'exemple synthétiques (test d'installation)")
+    sd.add_argument("--output", type=Path, default=Path("data/inputs"))
+    sd.add_argument("--period", default="current-month", help="Période AAAA-MM, previous-month ou current-month")
+
     db = sub.add_parser("db", help="Gestion de la base PostgreSQL/PostGIS")
     db_sub = db.add_subparsers(dest="db_command", required=True)
     db_sub.add_parser("migrate", help="Applique les migrations de schéma manquantes")
@@ -68,6 +72,17 @@ def main(argv: list[str] | None = None) -> int:
         level=logging.DEBUG if getattr(args, "verbose", False) else logging.INFO,
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
+    if args.command == "sample-data":
+        from .sample_data import make_sample_data
+
+        try:
+            for path in make_sample_data(args.output, resolve_period(args.period)):
+                print(f"{path} (données SYNTHÉTIQUES)")
+        except ValueError as exc:
+            print(f"Erreur : {exc}", file=sys.stderr)
+            return 2
+        return 0
+
     if args.command == "db":
         return _db_command(args.db_command)
 

@@ -1,9 +1,9 @@
 # Points ouverts
 
-À jour au 2026-11-11. Retirer un point une fois résolu (et le noter dans [history.md](history.md)).
+À jour au 2026-11-14. Retirer un point une fois résolu (et le noter dans [history.md](history.md)).
 
 ## À faire en priorité
-0. **Première chaîne réelle (bloque l'exploitation sur AlwaysData)** — le déploiement et la publication S3 sont prêts et
+0. **Première chaîne réelle (bloque l'exploitation)** — le déploiement et la publication S3 sont prêts et
    testés avec des données synthétiques ; il manque la chaîne réelle. Écarts constatés avec le laboratoire
    (`Lucioles-lab/notebooks/EO-map-*.ipynb`) :
    - *Air, volet quantitatif* : l'indicateur est le **pire sous-indice ATMO** parmi PM2,5/PM10/NO2/O3 (bornes par polluant,
@@ -17,8 +17,9 @@
    - Fond administratif : le notebook utilise ADMIN_EXPRESS (`infos_communes.gpkg`, Lambert-93) ; l'exemple open data
      (`communes-1000m`) ne contient ni population ni superficie.
    Backlog correspondant : US-1.8 et US-1.9 (`docs/user-stories/E1-socle.md`).
-0b. **Valider sur le vrai AlwaysData** : disque de l'offre (≥ ~2 Go), version de Python, `CREATE EXTENSION postgis`
-   (non vérifié), puis suivre `docs/DEPLOIEMENT-ALWAYSDATA.md` (test de fumée) avant la première chaîne réelle.
+0b. **Déploiement « option C » (gratuit)** : workflow GitHub Actions (planifié + manuel) qui lance la chaîne, publie sur S3
+   (secrets AWS du dépôt) et écrit dans PostgreSQL hébergé (Neon/Supabase : vérifier `CREATE EXTENSION postgis`, limites
+   du plan gratuit, dépôt public ou privé → minutes disponibles). Remplace `monthly.yml` (squelette). À faire en US-5.x.
 0c. **Lecture publique des résultats S3** : bucket privé par défaut ; choisir CloudFront, URL présignées ou lecture publique
    d'un préfixe. Publication sur cartes.gouv.fr reportée (voir E5).
 1. **Itération suivante : E3** (service en tâche de fond, API REST OpenAPI, planification) — voir

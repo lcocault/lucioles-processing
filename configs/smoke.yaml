@@ -1,6 +1,6 @@
 # Chaîne de TEST d'installation : vraies limites communales (téléchargées), mesures SYNTHÉTIQUES.
 # Préparer les données : lucioles sample-data --period 2026-10
-# Variables d'environnement : LUCIOLES_S3_BUCKET (obligatoire) et les identifiants AWS (voir deploy/alwaysdata/env.example).
+# Variables d'environnement : LUCIOLES_S3_BUCKET (obligatoire) et les identifiants AWS.
 # Tout est publié sous le préfixe `smoke/` pour ne jamais se mélanger aux publications réelles.
 chain: smoke_test
 

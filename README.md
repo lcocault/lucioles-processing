@@ -38,9 +38,9 @@ chaque étape ; le code de sortie est non nul en cas d'échec (1) ou d'erreur de
 
 ## Déploiement
 
-Hébergement AlwaysData (SSH + tâche planifiée) avec publication dans un bucket S3 : voir
-[docs/DEPLOIEMENT-ALWAYSDATA.md](docs/DEPLOIEMENT-ALWAYSDATA.md). Test d'installation :
-`lucioles sample-data` puis `configs/smoke.yaml` (mesures synthétiques).
+Cible retenue (gratuite) : calcul par **GitHub Actions**, publication dans un **bucket S3**, base **PostgreSQL/PostGIS**
+hébergée (Neon ou Supabase) — voir [open-points.md](docs/open-points.md). Test : `lucioles sample-data` puis
+`configs/smoke.yaml` (mesures synthétiques).
 
 ## Base de données (PostgreSQL / PostGIS)
 

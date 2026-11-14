@@ -4,6 +4,11 @@ Journal chronologique (le plus récent en premier) destiné à reprendre le trav
 conversation. À compléter à chaque US livrée. Les points non résolus sont dans [open-points.md](open-points.md) ;
 le backlog dans [user-stories/](user-stories/).
 
+## 2026-11-14 — Choix de la cible de déploiement : GitHub Actions + S3 + base hébergée
+- AlwaysData écarté (disque insuffisant pour ≈ 700 Mo ; mesure : ≈ 375 Mo possible sans scipy/NetCDF/tests). Suppression de
+  `docs/DEPLOIEMENT-ALWAYSDATA.md`, de `deploy/alwaysdata/` et de `tests/unit/test_deploy_scripts.py` (récupérables dans git :
+  commit 8145576). AWS payant (EC2/RDS/Fargate, ≈ 15–25 $/mois) non retenu : option « C » gratuite choisie.
+
 ## 2026-11-14 — Préparation du déploiement AlwaysData et publication S3
 - **US-5.1b `fait`** : adaptateur `distribute: s3` (`adapters/s3.py`, boto3 en extra `[s3]`) : `<préfixe>/<chaîne>/<période>/…`,
   types MIME, `latest.json` qui ne régresse jamais, identifiants par l'environnement AWS standard, `endpoint_url` possible.

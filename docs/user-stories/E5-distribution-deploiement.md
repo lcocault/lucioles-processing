@@ -11,6 +11,11 @@ En tant qu'exploitant, je veux publier les fichiers produits dans un bucket S3 a
 - `<préfixe>/<chaîne>/latest.json` désigne la dernière période publiée (jamais écrasé par une période plus ancienne).
 - Identifiants uniquement par l'environnement AWS standard (jamais dans le YAML) ; `endpoint_url` pour un S3 compatible.
 
+## US-5.1c — Exécution des chaînes sur GitHub Actions  `S` `fait`
+En tant qu'exploitant, je veux lancer une chaîne depuis GitHub (à la demande, puis planifiée) afin de l'exploiter sans serveur ni coût.
+- Workflow `run-chain.yml` : paramètres `config`, `period`, `sample_data` ; secrets AWS et `LUCIOLES_DATABASE_URL` ; migration de la base ; une exécution à la fois par chaîne/période ; espace de travail joint en cas d'échec.
+- Guide `docs/DEPLOIEMENT-GITHUB-ACTIONS.md` (Neon, IAM, secrets, test de fumée). Planification à activer avec la première chaîne réelle.
+
 ## US-5.2 — Image Docker et composition  `M` `à faire`
 En tant qu'exploitant, je veux une image contenant l'application et ses dépendances (GDAL, tippecanoe, pmtiles) et un `docker compose` avec PostGIS afin de déployer en une commande.
 - Volumes pour l'espace de travail et les produits ; configuration par variables d'environnement.

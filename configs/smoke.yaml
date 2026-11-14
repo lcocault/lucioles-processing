@@ -1,6 +1,7 @@
 # Chaîne de TEST d'installation : vraies limites communales (téléchargées), mesures SYNTHÉTIQUES.
 # Préparer les données : lucioles sample-data --period 2026-10
-# Variables d'environnement : LUCIOLES_S3_BUCKET (obligatoire) et les identifiants AWS.
+# Variables d'environnement : LUCIOLES_S3_BUCKET (obligatoire), identifiants AWS, et LUCIOLES_SAVE=postgres
+# (avec LUCIOLES_DATABASE_URL) pour enregistrer aussi les indicateurs en base ; `none` par défaut.
 # Tout est publié sous le préfixe `smoke/` pour ne jamais se mélanger aux publications réelles.
 chain: smoke_test
 
@@ -34,6 +35,7 @@ steps:
     params: {cache_dir: cache}
   read: {use: commune_aggregation}
   calculate: {use: weighted_sum}
+  save: {use: "${LUCIOLES_SAVE:-none}"}
   build:
     use: map_files
     params: {formats: [gpkg, geojson, kml]}   # pmtiles : nécessite tippecanoe et pmtiles

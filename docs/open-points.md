@@ -17,9 +17,9 @@
    - Fond administratif : le notebook utilise ADMIN_EXPRESS (`infos_communes.gpkg`, Lambert-93) ; l'exemple open data
      (`communes-1000m`) ne contient ni population ni superficie.
    Backlog correspondant : US-1.8 et US-1.9 (`docs/user-stories/E1-socle.md`).
-0b. **Déploiement « option C » (gratuit)** : workflow GitHub Actions (planifié + manuel) qui lance la chaîne, publie sur S3
-   (secrets AWS du dépôt) et écrit dans PostgreSQL hébergé (Neon/Supabase : vérifier `CREATE EXTENSION postgis`, limites
-   du plan gratuit, dépôt public ou privé → minutes disponibles). Remplace `monthly.yml` (squelette). À faire en US-5.x.
+0b. **Valider le déploiement gratuit** (US-5.1c livrée, jamais exécutée en réel) : suivre
+   `docs/DEPLOIEMENT-GITHUB-ACTIONS.md` — projet Neon (vérifier `CREATE EXTENSION postgis` et les limites du plan), IAM,
+   secrets/variables GitHub, puis lancer le workflow de test de fumée. Activer `schedule` avec la première chaîne réelle.
 0c. **Lecture publique des résultats S3** : bucket privé par défaut ; choisir CloudFront, URL présignées ou lecture publique
    d'un préfixe. Publication sur cartes.gouv.fr reportée (voir E5).
 1. **Itération suivante : E3** (service en tâche de fond, API REST OpenAPI, planification) — voir

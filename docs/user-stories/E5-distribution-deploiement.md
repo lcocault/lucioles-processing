@@ -5,6 +5,12 @@ En tant qu'exploitant, je veux distribuer les fichiers produits vers une cible c
 - Adaptateurs `ProductDistributor` : dossier local, SFTP ; d'autres (S3, ...) pourront s'ajouter sans toucher au domaine.
 - Une distribution en échec est signalée dans le statut de l'étape 6 et peut être rejouée sans recalcul.
 
+## US-5.1b — Distribution vers un bucket Amazon S3  `M` `fait`
+En tant qu'exploitant, je veux publier les fichiers produits dans un bucket S3 afin de les rendre accessibles sans serveur dédié.
+- Adaptateur `s3` : `<préfixe>/<chaîne>/<période>/<fichier>` ; types MIME corrects ; réécriture idempotente.
+- `<préfixe>/<chaîne>/latest.json` désigne la dernière période publiée (jamais écrasé par une période plus ancienne).
+- Identifiants uniquement par l'environnement AWS standard (jamais dans le YAML) ; `endpoint_url` pour un S3 compatible.
+
 ## US-5.2 — Image Docker et composition  `M` `à faire`
 En tant qu'exploitant, je veux une image contenant l'application et ses dépendances (GDAL, tippecanoe, pmtiles) et un `docker compose` avec PostGIS afin de déployer en une commande.
 - Volumes pour l'espace de travail et les produits ; configuration par variables d'environnement.

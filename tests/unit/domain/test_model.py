@@ -96,3 +96,16 @@ class TestIndicatorValue:
 
 def test_product_file():
     assert ProductFile("a.kml", Path("a.kml"), "kml").format == "kml"
+
+
+class TestPeriodNavigation:
+    def test_previous(self):
+        assert Period(2026, 10).previous() == Period(2026, 9)
+
+    def test_previous_across_years(self):
+        assert Period(2026, 1).previous() == Period(2025, 12)
+
+    def test_of_month(self):
+        from datetime import date
+
+        assert Period.of_month(date(2026, 11, 14)) == Period(2026, 11)

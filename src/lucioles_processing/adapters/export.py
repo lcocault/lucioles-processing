@@ -8,7 +8,6 @@ import subprocess
 from pathlib import Path
 
 import geopandas as gpd
-import matplotlib.colors as mcolors
 import pandas as pd
 import simplekml
 
@@ -20,7 +19,7 @@ log = logging.getLogger(__name__)
 def kml_color(level) -> str:
     """Niveau OPF (0..4, ou NA) -> couleur KML 'aabbggrr' opaque."""
     hex_color = NO_DATA_COLOR if pd.isna(level) else OPF_COLORS[int(level)]
-    r, g, b = (int(x * 255) for x in mcolors.to_rgb(hex_color))
+    r, g, b = (int(hex_color[i : i + 2], 16) for i in (1, 3, 5))
     return f"ff{b:02x}{g:02x}{r:02x}"
 
 

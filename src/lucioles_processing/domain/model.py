@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
 
 LEVELS = range(5)  # niveaux OPF : 0 (meilleur) à 4 (pire)
@@ -27,6 +28,13 @@ class Period:
         if not match:
             raise ValueError(f"Période invalide '{text}' (format attendu : AAAA-MM)")
         return cls(int(match[1]), int(match[2]))
+
+    @classmethod
+    def of_month(cls, day: date) -> Period:
+        return cls(day.year, day.month)
+
+    def previous(self) -> Period:
+        return Period(self.year - 1, 12) if self.month == 1 else Period(self.year, self.month - 1)
 
     def fields(self) -> dict[str, str]:
         """Champs de substitution des chemins et URLs : `{period}`, `{year}`, `{month}`."""

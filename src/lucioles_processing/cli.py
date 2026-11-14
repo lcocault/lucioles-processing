@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+from datetime import date
 from pathlib import Path
 
 import psycopg
@@ -37,13 +38,23 @@ def format_run(run: ChainRun) -> str:
     return "\n".join(lines)
 
 
+def resolve_period(text: str, today: date | None = None) -> Period:
+    """`AAAA-MM`, ou `previous-month` / `current-month` (pour les tâches planifiées)."""
+    today = today or date.today()
+    if text == "current-month":
+        return Period.of_month(today)
+    if text == "previous-month":
+        return Period.of_month(today).previous()
+    return Period.parse(text)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="lucioles", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("run", help="Exécute une chaîne de traitement pour une période")
     p.add_argument("--config", type=Path, required=True, help="Définition YAML de la chaîne")
-    p.add_argument("--period", required=True, help="Période AAAA-MM")
+    p.add_argument("--period", required=True, help="Période AAAA-MM, previous-month ou current-month")
     p.add_argument("--workspace", type=Path, default=Path("workspace"), help="Racine des espaces de travail")
     p.add_argument("-v", "--verbose", action="store_true")
 
@@ -61,7 +72,7 @@ def main(argv: list[str] | None = None) -> int:
         return _db_command(args.db_command)
 
     try:
-        period = Period.parse(args.period)
+        period = resolve_period(args.period)
         definition = load_chain_definition(args.config)
         components = default_registry().build(definition)
         listeners = _history_listeners()

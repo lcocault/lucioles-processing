@@ -14,6 +14,7 @@ from .postgres.database import ENV_VAR, Database
 from .postgres.repository import PostgresIndicatorRepository
 from .read import CommuneAggregationReader
 from .repository import InMemoryRepository, NullRepository
+from .s3 import S3Distributor
 
 
 def default_registry() -> Registry:
@@ -50,6 +51,16 @@ def default_registry() -> Registry:
     )
     reg.register(Step.DISTRIBUTE, "none", lambda c: NullDistributor())
     reg.register(Step.DISTRIBUTE, "local_folder", lambda c: LocalFolderDistributor(Path(c.require("directory"))))
+    reg.register(
+        Step.DISTRIBUTE,
+        "s3",
+        lambda c: S3Distributor(
+            c.require("bucket"),
+            str(c.params.get("prefix", "")),
+            region=c.params.get("region"),
+            endpoint_url=c.params.get("endpoint_url"),
+        ),
+    )
     return reg
 
 

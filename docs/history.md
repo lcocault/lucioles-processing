@@ -4,13 +4,14 @@ Journal chronologique (le plus récent en premier) destiné à reprendre le trav
 conversation. À compléter à chaque US livrée. Les points non résolus sont dans [open-points.md](open-points.md) ;
 le backlog dans [user-stories/](user-stories/).
 
-## 2026-11-14 — US-5.1c Exécution sur GitHub Actions (`fait`, à valider en réel)
+## 2026-11-14 — US-5.1c Exécution sur GitHub Actions (`fait`, validé en réel)
 - `.github/workflows/run-chain.yml` (remplace le squelette `monthly.yml`) : `workflow_dispatch` (config, période, données
   synthétiques), secrets AWS + `LUCIOLES_DATABASE_URL`, variables `LUCIOLES_S3_BUCKET`/`AWS_DEFAULT_REGION`, `db migrate` si
   la base est configurée (`LUCIOLES_SAVE=postgres`), concurrence par chaîne/période, artefact du workspace en cas d'échec.
 - `configs/smoke.yaml` : étape `save` pilotée par `${LUCIOLES_SAVE:-none}`. Guide `docs/DEPLOIEMENT-GITHUB-ACTIONS.md` (Neon,
   IAM, secrets). `tests/unit/test_workflow.py` vérifie les variables fournies, l'absence de secret en clair, les permissions.
-- **Non vérifié** : exécution réelle sur GitHub, PostGIS sur Neon, accès au bucket (aucun accès depuis cet environnement).
+- **Validé en réel** par l'utilisateur : le test de fumée passe sur GitHub Actions (S3 + Neon). Contenu du bucket et des tables
+  non inspecté depuis cet environnement.
 
 ## 2026-11-14 — Choix de la cible de déploiement : GitHub Actions + S3 + base hébergée
 - AlwaysData écarté (disque insuffisant pour ≈ 700 Mo ; mesure : ≈ 375 Mo possible sans scipy/NetCDF/tests). Suppression de

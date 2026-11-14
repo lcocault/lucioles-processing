@@ -17,9 +17,8 @@
    - Fond administratif : le notebook utilise ADMIN_EXPRESS (`infos_communes.gpkg`, Lambert-93) ; l'exemple open data
      (`communes-1000m`) ne contient ni population ni superficie.
    Backlog correspondant : US-1.8 et US-1.9 (`docs/user-stories/E1-socle.md`).
-0b. **Valider le déploiement gratuit** (US-5.1c livrée, jamais exécutée en réel) : suivre
-   `docs/DEPLOIEMENT-GITHUB-ACTIONS.md` — projet Neon (vérifier `CREATE EXTENSION postgis` et les limites du plan), IAM,
-   secrets/variables GitHub, puis lancer le workflow de test de fumée. Activer `schedule` avec la première chaîne réelle.
+0b. **Planification** : le workflow `run-chain.yml` est validé en réel (test de fumée, 2026-11-14) ; activer `schedule`
+   dans le workflow avec la première chaîne réelle.
 0c. **Lecture publique des résultats S3** : bucket privé par défaut ; choisir CloudFront, URL présignées ou lecture publique
    d'un préfixe. Publication sur cartes.gouv.fr reportée (voir E5).
 1. **Itération suivante : E3** (service en tâche de fond, API REST OpenAPI, planification) — voir

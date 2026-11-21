@@ -64,3 +64,9 @@ En tant que chargé d'indicateurs, je veux les calculs réellement utilisés par
 ## US-1.9 — Périodes annuelles  `M` `fait`
 En tant qu'exploitant, je veux traiter des données annuelles (INERIS, pollution lumineuse) afin de ne pas les forcer dans un mois.
 - `Period` accepte `AAAA` en plus de `AAAA-MM` ; placeholders `{year}` ; `previous-year` en CLI ; stockage et S3 compatibles.
+
+## US-1.10 — Extraction d'une zone d'un grand raster  `S` `fait`
+En tant qu'exploitant, je veux extraire une zone (France, département ou emprise libre) d'un raster mondial afin de ne publier et ne traiter que la partie utile.
+- `lucioles extract-raster --input … --output … --region france|haute-garonne | --bbox OUEST SUD EST NORD [--margin 0.05]` ; lecture fenêtrée (jamais le raster entier), GeoTIFF compressé, provenance dans les métadonnées.
+- Essai réel : VNL 2025 mondial (11,6 Go) → France 27,5 Mo, Haute-Garonne 0,5 Mo, en quelques secondes.
+

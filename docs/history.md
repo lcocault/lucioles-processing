@@ -9,6 +9,12 @@ le backlog dans [user-stories/](user-stories/).
   La migration `003_annual_period_primary_key.sql` inclut désormais `period_kind` dans la clé primaire
   d’`indicator_value`, préservant les données et le schéma déjà migré par la version 002.
 
+## 2026-11-21 — US-1.10 Extraction d'une zone d'un raster (`fait`)
+- `raster_extract.py` + `lucioles extract-raster` (voir E1). Fichier réel reçu : `VNL_npp_2025_global_vcmslcfg_v2_c202604011200.average.dat.tif`
+  (11,6 Go, float32, EPSG:4326, 86401 x 33601 px, 0,004167°, **sans nodata**, non compressé, lignes contiguës → lecture fenêtrée rapide).
+  Variante `average` (pas `average_masked`) : sur la France, aucune valeur ≤ 0 ; min 0,22, médiane 0,47, p90 1,65, p99 17,5, max 1647.
+- Extraits dans `tmp/vnl/` (ignoré par git) : France 27,5 Mo, Haute-Garonne 0,5 Mo.
+
 ## 2026-11-21 — US-1.9 Périodes annuelles (`fait`) ; choix de VIIRS VNL pour la pollution lumineuse
 - `Period(year, month=None)` : `AAAA` en plus de `AAAA-MM` ; `is_annual`, `of_year`, `previous()` de même nature, ordre total
   (annuelle < mensuelle de la même année) ; `fields()` sans `{month}` pour une année (message clair si le YAML l'utilise).

@@ -9,6 +9,7 @@ from datetime import date
 from pathlib import Path
 
 import psycopg
+import rasterio.errors
 
 from .adapters.postgres.database import (
     ConfigurationError,
@@ -66,6 +67,13 @@ def main(argv: list[str] | None = None) -> int:
     sd.add_argument("--output", type=Path, default=Path("data/inputs"))
     sd.add_argument("--period", default="current-month", help="Période AAAA-MM ou AAAA, previous-month/current-month, previous-year/current-year")
 
+    ex = sub.add_parser("extract-raster", help="Extrait une zone d'un grand raster (par exemple VIIRS mondial)")
+    ex.add_argument("--input", type=Path, required=True, help="Raster source (GeoTIFF en coordonnées géographiques)")
+    ex.add_argument("--output", type=Path, required=True, help="GeoTIFF compressé à écrire")
+    ex.add_argument("--region", help="Emprise prédéfinie : france, haute-garonne")
+    ex.add_argument("--bbox", type=float, nargs=4, metavar=("OUEST", "SUD", "EST", "NORD"), help="Emprise en degrés")
+    ex.add_argument("--margin", type=float, default=0.05, help="Marge ajoutée à l'emprise, en degrés (défaut 0.05)")
+
     db = sub.add_parser("db", help="Gestion de la base PostgreSQL/PostGIS")
     db_sub = db.add_subparsers(dest="db_command", required=True)
     db_sub.add_parser("migrate", help="Applique les migrations de schéma manquantes")
@@ -85,6 +93,18 @@ def main(argv: list[str] | None = None) -> int:
         except ValueError as exc:
             print(f"Erreur : {exc}", file=sys.stderr)
             return 2
+        return 0
+
+    if args.command == "extract-raster":
+        from .raster_extract import extract_window, resolve_bbox
+
+        try:
+            bbox = resolve_bbox(tuple(args.bbox) if args.bbox else None, args.region)
+            result = extract_window(args.input, args.output, bbox, args.margin)
+        except (ValueError, OSError, rasterio.errors.RasterioError) as exc:
+            print(f"Erreur : {exc}", file=sys.stderr)
+            return 2
+        print(f"{result.path} : {result.width} x {result.height} pixels, {result.size_bytes / 1e6:.1f} Mo")
         return 0
 
     if args.command == "db":

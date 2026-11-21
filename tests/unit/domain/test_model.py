@@ -1,3 +1,4 @@
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -21,7 +22,7 @@ class TestPeriod:
     def test_fields(self):
         assert Period(2026, 3).fields() == {"period": "2026-03", "year": "2026", "month": "03"}
 
-    @pytest.mark.parametrize("text", ["2026", "2026-13", "2026-00", "26-10", "2026/10", "abcd-ef", ""])
+    @pytest.mark.parametrize("text", ["2026-13", "2026-00", "26-10", "2026/10", "abcd-ef", ""])
     def test_invalid_text(self, text):
         with pytest.raises(ValueError, match="Période invalide"):
             Period.parse(text)
@@ -29,6 +30,26 @@ class TestPeriod:
     def test_invalid_numbers(self):
         with pytest.raises(ValueError):
             Period(2026, 13)
+
+    def test_annual_period(self):
+        period = Period.parse("2023")
+        assert (period.year, period.month, period.is_annual) == (2023, None, True)
+        assert str(period) == "2023" and not Period(2023, 1).is_annual
+        assert period == Period(2023)
+        assert period != Period(2023, 1)
+
+    def test_annual_fields_have_no_month(self):
+        assert Period(2023).fields() == {"period": "2023", "year": "2023"}
+
+    def test_previous_and_of_year(self):
+        assert Period(2023).previous() == Period(2022)
+        assert Period.of_year(date(2026, 11, 21)) == Period(2026)
+
+    def test_annual_ordering_is_total(self):
+        assert Period(2022) < Period(2023) <= Period(2023) < Period(2024, 1)
+        assert Period(2023) < Period(2023, 1)
+        assert sorted([Period(2024), Period(2023, 5), Period(2023)]) == [Period(2023), Period(2023, 5), Period(2024)]
+        assert Period(2024) > Period(2023, 12)
 
     def test_ordering_and_immutability(self):
         assert Period(2025, 12) < Period(2026, 1)

@@ -74,3 +74,12 @@ def test_recover_interrupted_runs(db):
     assert store.get(queued.id).status == Status.FAILED
     assert store.get(done.id).status == Status.SUCCEEDED
     assert store.recover_interrupted() == 0
+
+
+def test_annual_run_keeps_its_period_kind(db, tmp_path):
+    executor = ChainExecutor(
+        make_definition(), make_components(), tmp_path, [PostgresRunListener(db)]
+    )
+    run = executor.run(Period(2023), trigger="cli")
+    stored = PostgresRunStore(db).get(run.id)
+    assert stored.period == Period(2023) and stored.period.is_annual

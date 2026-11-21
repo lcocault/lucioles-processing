@@ -6,42 +6,66 @@ import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import date
+from functools import total_ordering
 from pathlib import Path
 
 LEVELS = range(5)  # niveaux OPF : 0 (meilleur) à 4 (pire)
 
 
-@dataclass(frozen=True, order=True)
+@total_ordering
+@dataclass(frozen=True)
 class Period:
-    """Période mensuelle, notée `AAAA-MM`."""
+    """Période mensuelle (`AAAA-MM`) ou annuelle (`AAAA`, `month` vaut alors `None`)."""
 
     year: int
-    month: int
+    month: int | None = None
 
     def __post_init__(self) -> None:
-        if not (1 <= self.year <= 9999 and 1 <= self.month <= 12):
-            raise ValueError(f"Période invalide {self.year}-{self.month} (format attendu : AAAA-MM)")
+        if not 1 <= self.year <= 9999 or (self.month is not None and not 1 <= self.month <= 12):
+            raise ValueError(f"Période invalide {self} (format attendu : AAAA-MM ou AAAA)")
+
+    @property
+    def is_annual(self) -> bool:
+        return self.month is None
 
     @classmethod
     def parse(cls, text: str) -> Period:
-        match = re.fullmatch(r"(\d{4})-(\d{2})", text.strip())
+        match = re.fullmatch(r"(\d{4})(?:-(\d{2}))?", text.strip())
         if not match:
-            raise ValueError(f"Période invalide '{text}' (format attendu : AAAA-MM)")
-        return cls(int(match[1]), int(match[2]))
+            raise ValueError(f"Période invalide '{text}' (format attendu : AAAA-MM ou AAAA)")
+        return cls(int(match[1]), int(match[2]) if match[2] else None)
 
     @classmethod
     def of_month(cls, day: date) -> Period:
         return cls(day.year, day.month)
 
+    @classmethod
+    def of_year(cls, day: date) -> Period:
+        return cls(day.year)
+
     def previous(self) -> Period:
+        """Période précédente de même nature (mois ou année)."""
+        if self.is_annual:
+            return Period(self.year - 1)
         return Period(self.year - 1, 12) if self.month == 1 else Period(self.year, self.month - 1)
 
     def fields(self) -> dict[str, str]:
-        """Champs de substitution des chemins et URLs : `{period}`, `{year}`, `{month}`."""
-        return {"period": str(self), "year": f"{self.year:04d}", "month": f"{self.month:02d}"}
+        """Champs de substitution des chemins et URLs : `{period}`, `{year}` et `{month}` (périodes mensuelles)."""
+        fields = {"period": str(self), "year": f"{self.year:04d}"}
+        if self.month is not None:
+            fields["month"] = f"{self.month:02d}"
+        return fields
+
+    def _key(self) -> tuple[int, int]:
+        return (self.year, self.month or 0)
+
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, Period):
+            return NotImplemented
+        return self._key() < other._key()
 
     def __str__(self) -> str:
-        return f"{self.year:04d}-{self.month:02d}"
+        return f"{self.year:04d}" if self.month is None else f"{self.year:04d}-{self.month:02d}"
 
 
 @dataclass(frozen=True)

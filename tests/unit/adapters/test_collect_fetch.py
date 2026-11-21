@@ -37,6 +37,16 @@ def test_url_source_is_downloaded_then_verified(tmp_path, http_server):
     assert first.path.read_bytes() == b"a;b\n"
 
 
+def test_annual_period_substitutes_year_and_rejects_month(tmp_path):
+    (tmp_path / "vnl_2023.tif").write_text("x")
+    annual = Period(2023)
+    ok = SourceConfig("light", "zonal_mean", path=str(tmp_path / "vnl_{year}.tif"))
+    assert collect(ok, annual, tmp_path).path == tmp_path / "vnl_2023.tif"
+    bad = SourceConfig("light", "zonal_mean", path=str(tmp_path / "vnl_{year}_{month}.tif"))
+    with pytest.raises(ValueError, match=r"\{month\}.*annuelle"):
+        collect(bad, annual, tmp_path)
+
+
 def make_fetcher(tmp_path, boundaries, cache=None, sources=None):
     return ConfiguredSourcesFetcher(sources or {}, boundaries, cache)
 

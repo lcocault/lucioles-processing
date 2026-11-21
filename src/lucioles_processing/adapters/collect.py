@@ -16,6 +16,18 @@ from .download import download
 log = logging.getLogger(__name__)
 
 
+def _substitute(template: str, fields: dict[str, str], period: Period, source_name: str) -> str:
+    try:
+        return template.format(**fields)
+    except KeyError as exc:
+        if exc.args[0] == "month" and period.is_annual:
+            raise ValueError(
+                f"[{source_name}] {{month}} n'a pas de sens pour la période annuelle {period} : "
+                "utiliser {year} ou {period}"
+            ) from exc
+        raise ValueError(f"[{source_name}] champ inconnu {{{exc.args[0]}}} (champs : {sorted(fields)})") from exc
+
+
 def collect(source: SourceConfig, period: Period, download_dir: Path) -> FetchedFile:
     """Fichier local de la source pour la période.
 
@@ -25,11 +37,11 @@ def collect(source: SourceConfig, period: Period, download_dir: Path) -> Fetched
     fields = period.fields()
 
     if source.path:
-        path = Path(source.path.format(**fields))
+        path = Path(_substitute(source.path, fields, period, source.name))
         if not path.exists():
             raise FileNotFoundError(f"[{source.name}] fichier introuvable : {path}")
         return FetchedFile.local(path)
 
-    url = source.url.format(**fields)
+    url = _substitute(source.url, fields, period, source.name)
     target = download_dir / str(period) / source.name / Path(url.split("?")[0]).name
     return download(url, target)

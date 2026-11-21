@@ -4,6 +4,18 @@ Journal chronologique (le plus récent en premier) destiné à reprendre le trav
 conversation. À compléter à chaque US livrée. Les points non résolus sont dans [open-points.md](open-points.md) ;
 le backlog dans [user-stories/](user-stories/).
 
+## 2026-11-21 — US-1.9 Périodes annuelles (`fait`) ; choix de VIIRS VNL pour la pollution lumineuse
+- `Period(year, month=None)` : `AAAA` en plus de `AAAA-MM` ; `is_annual`, `of_year`, `previous()` de même nature, ordre total
+  (annuelle < mensuelle de la même année) ; `fields()` sans `{month}` pour une année (message clair si le YAML l'utilise).
+- CLI : `--period 2023`, `previous-year`, `current-year`.
+- PostgreSQL : migration `002_period_kind.sql` (colonne `period_kind` `month|year` sur `indicator_value` et `chain_run`, année =
+  1er janvier). Logique de la migration vérifiée sur un PostgreSQL 15 local (sans PostGIS) : lignes existantes `month`, année
+  refusée hors 1er janvier. **Les tests d'intégration annuels (`tests/integration`) n'ont pas pu tourner ici** (pas de PostGIS) :
+  à confirmer par la CI après push. S3 : `latest.json` fonctionne déjà (`Period.parse`).
+- Pollution lumineuse : le jeu « Trame noire » de la MGP est écarté (Métropole seule, enjeux et non radiance, non mis à jour).
+  Source retenue : **VIIRS VNL v2.2** (EOG, Colorado School of Mines), global ~500 m, unité nW/cm²/sr, GeoTIFF gzip.
+  **Le téléchargement exige un compte EOG** (redirection OpenID Connect) : voir points ouverts.
+
 ## 2026-11-14 — US-5.1c Exécution sur GitHub Actions (`fait`, validé en réel)
 - `.github/workflows/run-chain.yml` (remplace le squelette `monthly.yml`) : `workflow_dispatch` (config, période, données
   synthétiques), secrets AWS + `LUCIOLES_DATABASE_URL`, variables `LUCIOLES_S3_BUCKET`/`AWS_DEFAULT_REGION`, `db migrate` si

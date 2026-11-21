@@ -149,3 +149,20 @@ def test_unreachable_server_without_cache_fails_at_fetch(env, http_server, capsy
     assert run_cli(cfg, tmp_path) == 1
     printed = capsys.readouterr().out
     assert "fetch" in printed and "ÉCHEC" in printed and printed.count("ignorée") == 5
+
+
+def test_annual_period_run(env):
+    """Une chaîne annuelle : `--period 2026`, `{period}` vaut `2026`, sortie sous `<chaîne>/2026/`."""
+    tmp_path, cfg = env
+    (tmp_path / "pm10_2026-10.csv").rename(tmp_path / "pm10_2026.csv")
+    assert run_cli(cfg, tmp_path, period="2026") == 0
+    out = tmp_path / "out" / "air" / "2026"
+    assert sorted(p.name for p in out.iterdir()) == ["air.geojson", "air.gpkg", "air.kml", "manifest.json"]
+    assert json.loads((out / "manifest.json").read_text())["period"] == "2026"
+
+
+def test_annual_period_with_month_placeholder_is_a_clear_failure(env, capsys):
+    tmp_path, cfg = env
+    cfg.write_text(cfg.read_text().replace("pm10_{period}.csv", "pm10_{year}_{month}.csv"))
+    assert run_cli(cfg, tmp_path, period="2026") == 1
+    assert "annuelle" in capsys.readouterr().out

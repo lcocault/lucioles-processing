@@ -11,11 +11,16 @@ from .database import Database
 
 
 def period_to_date(period: Period) -> date:
-    return date(period.year, period.month, 1)
+    """Premier jour de la période (le 1er janvier pour une période annuelle)."""
+    return date(period.year, period.month or 1, 1)
 
 
-def date_to_period(value: date) -> Period:
-    return Period(value.year, value.month)
+def period_kind(period: Period) -> str:
+    return "year" if period.is_annual else "month"
+
+
+def date_to_period(value: date, kind: str = "month") -> Period:
+    return Period(value.year) if kind == "year" else Period(value.year, value.month)
 
 
 class PostgresIndicatorRepository(IndicatorRepository):
@@ -40,14 +45,14 @@ class PostgresIndicatorRepository(IndicatorRepository):
             for indicator, period in sorted({(v.indicator, v.period) for v in values}, key=str):
                 cur.execute("INSERT INTO indicator (name) VALUES (%s) ON CONFLICT DO NOTHING", (indicator,))
                 cur.execute(
-                    "DELETE FROM indicator_value WHERE indicator = %s AND period = %s",
-                    (indicator, period_to_date(period)),
+                    "DELETE FROM indicator_value WHERE indicator = %s AND period = %s AND period_kind = %s",
+                    (indicator, period_to_date(period), period_kind(period)),
                 )
             cur.executemany(
-                "INSERT INTO indicator_value (indicator, period, territory_code, value, level) "
-                "VALUES (%s, %s, %s, %s, %s)",
+                "INSERT INTO indicator_value (indicator, period, period_kind, territory_code, value, level) "
+                "VALUES (%s, %s, %s, %s, %s, %s)",
                 [
-                    (v.indicator, period_to_date(v.period), v.territory_code, v.value, v.level)
+                    (v.indicator, period_to_date(v.period), period_kind(v.period), v.territory_code, v.value, v.level)
                     for v in values
                 ],
             )
@@ -58,12 +63,12 @@ class PostgresIndicatorRepository(IndicatorRepository):
         """Valeurs d'un indicateur pour une période, éventuellement limitées à un territoire."""
         query = (
             "SELECT indicator, period, territory_code, value, level FROM indicator_value "
-            "WHERE indicator = %s AND period = %s"
+            "WHERE indicator = %s AND period = %s AND period_kind = %s"
         )
-        params: list = [indicator, period_to_date(period)]
+        params: list = [indicator, period_to_date(period), period_kind(period)]
         if territory_code is not None:
             query += " AND territory_code = %s"
             params.append(territory_code)
         with self.db.connect() as conn:
             rows = conn.execute(query + " ORDER BY territory_code", params).fetchall()
-        return [IndicatorValue(r[0], date_to_period(r[1]), r[2], r[3], r[4]) for r in rows]
+        return [IndicatorValue(r[0], date_to_period(r[1], period_kind(period)), r[2], r[3], r[4]) for r in rows]

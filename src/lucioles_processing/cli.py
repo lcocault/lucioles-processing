@@ -39,8 +39,12 @@ def format_run(run: ChainRun) -> str:
 
 
 def resolve_period(text: str, today: date | None = None) -> Period:
-    """`AAAA-MM`, ou `previous-month` / `current-month` (pour les tâches planifiées)."""
+    """`AAAA-MM` ou `AAAA`, ou `previous-month`/`current-month`/`previous-year`/`current-year` (tâches planifiées)."""
     today = today or date.today()
+    if text == "current-year":
+        return Period.of_year(today)
+    if text == "previous-year":
+        return Period.of_year(today).previous()
     if text == "current-month":
         return Period.of_month(today)
     if text == "previous-month":
@@ -54,13 +58,13 @@ def main(argv: list[str] | None = None) -> int:
 
     p = sub.add_parser("run", help="Exécute une chaîne de traitement pour une période")
     p.add_argument("--config", type=Path, required=True, help="Définition YAML de la chaîne")
-    p.add_argument("--period", required=True, help="Période AAAA-MM, previous-month ou current-month")
+    p.add_argument("--period", required=True, help="Période AAAA-MM ou AAAA, previous-month/current-month, previous-year/current-year")
     p.add_argument("--workspace", type=Path, default=Path("workspace"), help="Racine des espaces de travail")
     p.add_argument("-v", "--verbose", action="store_true")
 
     sd = sub.add_parser("sample-data", help="Écrit des données d'exemple synthétiques (test d'installation)")
     sd.add_argument("--output", type=Path, default=Path("data/inputs"))
-    sd.add_argument("--period", default="current-month", help="Période AAAA-MM, previous-month ou current-month")
+    sd.add_argument("--period", default="current-month", help="Période AAAA-MM ou AAAA, previous-month/current-month, previous-year/current-year")
 
     db = sub.add_parser("db", help="Gestion de la base PostgreSQL/PostGIS")
     db_sub = db.add_subparsers(dest="db_command", required=True)

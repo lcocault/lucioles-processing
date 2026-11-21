@@ -23,3 +23,10 @@ def test_defaults_to_the_real_date():
 def test_invalid():
     with pytest.raises(ValueError, match="Période invalide"):
         resolve_period("le-mois-dernier")
+
+
+def test_annual_period_and_previous_year():
+    today = date(2026, 1, 5)
+    assert resolve_period("2023") == Period(2023)
+    assert resolve_period("previous-year", today) == Period(2025)
+    assert resolve_period("current-year", today) == Period(2026)

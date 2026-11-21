@@ -90,3 +90,13 @@ def test_failure_keeps_previous_values(repo):
 def test_save_requires_a_current_schema(empty_db):
     with pytest.raises(SchemaOutdatedError):
         PostgresIndicatorRepository(empty_db).save(ctx(), TERRITORIES, values())
+
+
+def test_annual_period_is_stored_apart_from_january(repo):
+    year, january = Period(2023), Period(2023, 1)
+    repo.save(ctx(year), TERRITORIES, values(year, a=(3.0, 2)))
+    repo.save(ctx(january), TERRITORIES, values(january, a=(9.0, 4)))
+    assert repo.find("air", year) == values(year, a=(3.0, 2))
+    assert repo.find("air", january) == values(january, a=(9.0, 4))
+    repo.save(ctx(year), TERRITORIES, values(year, a=(5.0, 3)))  # rejeu : remplace l'année seulement
+    assert repo.find("air", year)[0].value == 5.0 and repo.find("air", january)[0].value == 9.0

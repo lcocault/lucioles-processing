@@ -61,6 +61,6 @@ En tant que chargé d'indicateurs, je veux les calculs réellement utilisés par
 - Tendance : comparaison de deux périodes (sources début/fin) avec dégradation légère/forte.
 - Reproduit les valeurs des notebooks `EO-map-*` sur un jeu de référence.
 
-## US-1.9 — Périodes annuelles  `M` `à faire`
+## US-1.9 — Périodes annuelles  `M` `fait`
 En tant qu'exploitant, je veux traiter des données annuelles (INERIS, pollution lumineuse) afin de ne pas les forcer dans un mois.
 - `Period` accepte `AAAA` en plus de `AAAA-MM` ; placeholders `{year}` ; `previous-year` en CLI ; stockage et S3 compatibles.

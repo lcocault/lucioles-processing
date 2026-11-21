@@ -5,7 +5,7 @@ from __future__ import annotations
 from ...domain.ports import RunListener
 from ...domain.run import ChainRun, Status, Step, StepRun
 from .database import Database
-from .repository import date_to_period, period_to_date
+from .repository import date_to_period, period_kind, period_to_date
 
 INTERRUPTED = "Interrompue : le service s'est arrêté pendant l'exécution"
 _ORDER = {step: i for i, step in enumerate(Step)}
@@ -21,12 +21,12 @@ class PostgresRunListener(RunListener):
         with self.db.connect() as conn, conn.cursor() as cur:
             cur.execute(
                 """
-                INSERT INTO chain_run (id, chain, period, trigger, status, created_at, started_at, finished_at, error)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO chain_run (id, chain, period, period_kind, trigger, status, created_at, started_at, finished_at, error)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, started_at = EXCLUDED.started_at,
                     finished_at = EXCLUDED.finished_at, error = EXCLUDED.error
                 """,
-                (run.id, run.chain, period_to_date(run.period), run.trigger, run.status.value,
+                (run.id, run.chain, period_to_date(run.period), period_kind(run.period), run.trigger, run.status.value,
                  run.created_at, run.started_at, run.finished_at, run.error),
             )
             cur.executemany(
@@ -50,7 +50,7 @@ class PostgresRunStore:
     def get(self, run_id: str) -> ChainRun | None:
         with self.db.connect() as conn:
             row = conn.execute(
-                "SELECT id, chain, period, trigger, status, created_at, started_at, finished_at "
+                "SELECT id, chain, period, trigger, status, created_at, started_at, finished_at, period_kind "
                 "FROM chain_run WHERE id = %s",
                 (run_id,),
             ).fetchone()
@@ -62,7 +62,7 @@ class PostgresRunStore:
                 (run_id,),
             ).fetchall()
         return ChainRun(
-            id=row[0], chain=row[1], period=date_to_period(row[2]), trigger=row[3], status=Status(row[4]),
+            id=row[0], chain=row[1], period=date_to_period(row[2], row[8]), trigger=row[3], status=Status(row[4]),
             created_at=row[5], started_at=row[6], finished_at=row[7],
             steps=[StepRun(Step(s[0]), s[1], Status(s[2]), s[3], s[4], s[5]) for s in steps],
         )

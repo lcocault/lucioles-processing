@@ -16,6 +16,10 @@ En tant qu'exploitant, je veux lancer une chaîne depuis GitHub (à la demande, 
 - Workflow `run-chain.yml` : paramètres `config`, `period`, `sample_data` ; secrets AWS et `LUCIOLES_DATABASE_URL` ; migration de la base ; une exécution à la fois par chaîne/période ; espace de travail joint en cas d'échec.
 - Guide `docs/DEPLOIEMENT-GITHUB-ACTIONS.md` (Neon, IAM, secrets, test de fumée). Planification à activer avec la première chaîne réelle.
 
+## US-5.1d — Sources lues depuis un bucket S3  `S` `fait`
+En tant qu'exploitant, je veux que les données d'entrée volumineuses ou non publiques soient lues depuis mon bucket afin de ne pas dépendre d'un téléchargement manuel à chaque exécution.
+- `url: s3://bucket/clé` (avec `{year}`, `{period}`) dans une source ou le fond administratif ; identifiants par l'environnement AWS ; mêmes garanties que HTTP (ETag, remplacement atomique, `unchanged`/`unverified`).
+
 ## US-5.2 — Image Docker et composition  `M` `à faire`
 En tant qu'exploitant, je veux une image contenant l'application et ses dépendances (GDAL, tippecanoe, pmtiles) et un `docker compose` avec PostGIS afin de déployer en une commande.
 - Volumes pour l'espace de travail et les produits ; configuration par variables d'environnement.

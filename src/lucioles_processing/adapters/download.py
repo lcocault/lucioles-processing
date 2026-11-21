@@ -46,14 +46,21 @@ def _result(url: str, target: Path, meta: dict, status: str) -> FetchedFile:
     return FetchedFile(path=target, origin=url, status=status, version=_version(meta), sha256=meta.get("sha256"))
 
 
-def download(url: str, target: Path, refresh: str = "if_changed", timeout: float = 60) -> FetchedFile:
+def download(
+    url: str, target: Path, refresh: str = "if_changed", timeout: float = 60, s3_client=None
+) -> FetchedFile:
     """Garantit que `target` contient la dernière version de `url`.
 
     - `refresh="never"` : une copie déjà présente est utilisée sans interroger le serveur.
     - `refresh="if_changed"` : requête conditionnelle ; 304 -> inchangé ; 200 -> remplacé de façon atomique.
     - Serveur injoignable (ou erreur 5xx) avec une copie locale : on l'utilise, statut `unverified`.
       Sans copie locale, l'erreur est propagée. Les erreurs 4xx sont toujours propagées.
+    - Une URL `s3://bucket/clé` est lue avec les identifiants AWS de l'environnement (voir `download_s3`).
     """
+    if url.startswith("s3://"):
+        from .download_s3 import download_s3
+
+        return download_s3(url, target, refresh, s3_client)
     if refresh not in REFRESH_MODES:
         raise ValueError(f"refresh '{refresh}' inconnu (attendu : {list(REFRESH_MODES)})")
     meta = _read_meta(target) if target.exists() else None

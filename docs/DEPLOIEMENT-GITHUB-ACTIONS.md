@@ -57,10 +57,15 @@ Onglet **Actions → Exécuter une chaîne → Run workflow** avec les valeurs p
 
 Relancer la même période doit réussir sans doublon (écritures idempotentes).
 
-## 5. Chaîne réelle et planification
-Une fois une chaîne réelle disponible (voir US-1.8 et US-1.9), lancer le même workflow avec son YAML, puis
-décommenter `schedule` dans le workflow (le 5 de chaque mois, 06:00 UTC). Les sources annuelles (INERIS, lumière)
-ne demandent qu'un déclenchement par an. GitHub désactive les planifications d'un dépôt resté 60 jours sans activité.
+## 5. Chaîne réelle : pollution lumineuse (VIIRS VNL)
+[configs/light_pollution.yaml](../configs/light_pollution.yaml) calcule, par commune, la radiance annuelle VIIRS.
+Préparation annuelle (manuelle, le fichier mondial pèse ~11 Go et exige un compte EOG) :
+1. Télécharger le composite annuel sur <https://eogdata.mines.edu/products/vnl/> et le décompresser.
+2. `lucioles extract-raster --input VNL_….average.dat.tif --output vnl_<année>_france.tif --region france` (≈ 27 Mo).
+3. Déposer le résultat dans le bucket : `s3://<bucket>/inputs/vnl/vnl_<année>_france.tif`.
+4. Actions → Exécuter une chaîne : config `configs/light_pollution.yaml`, période `<année>`, **décocher** « Générer des
+   mesures synthétiques ». Résultat : `indicators/light_pollution/<année>/` (gpkg, geojson, kml, manifeste) et `latest.json`.
+Les seuils des niveaux sont **provisoires** (voir le YAML). La planification (`schedule`) peut être activée une fois par an.
 
 ## Dépannage
 - **`Variable d'environnement LUCIOLES_S3_BUCKET absente`** : variable (et non secret) non créée, ou nom différent.

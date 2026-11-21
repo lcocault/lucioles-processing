@@ -1,0 +1,48 @@
+# Pollution lumineuse par commune : radiance annuelle VIIRS Nighttime Lights (EOG, v2, variante `average`, nW/cm²/sr).
+#
+# Source : fichier annuel mondial téléchargé manuellement sur https://eogdata.mines.edu/products/vnl/ (compte EOG requis),
+# recadré sur la France avec `lucioles extract-raster --region france` puis déposé dans le bucket :
+#   s3://<bucket>/inputs/vnl/vnl_<année>_france.tif
+# Lancer : lucioles run --config configs/light_pollution.yaml --period 2025
+#
+# Variables d'environnement : LUCIOLES_S3_BUCKET et les identifiants AWS (voir docs/DEPLOIEMENT-GITHUB-ACTIONS.md) ;
+# LUCIOLES_SAVE=postgres (avec LUCIOLES_DATABASE_URL) pour enregistrer aussi en base.
+#
+# ATTENTION — seuils PROVISOIRES : [0.5, 1, 2, 5] sont des repères de bon sens, à valider scientifiquement. Sur la France
+# métropolitaine 2025 ils donnent environ 33 % / 46 % / 11 % / 6 % / 4 % des communes dans les niveaux 0 à 4 (0 = le moins
+# lumineux). Plus la radiance est élevée, plus le niveau est élevé : pas d'inversion. Ce n'est pas la mesure du laboratoire.
+chain: light_pollution
+
+indicator:
+  name: light_pollution_radiance
+  weights: {light: 1.0}
+  thresholds: [0.5, 1, 2, 5]
+
+boundaries:
+  url: https://etalab-datasets.geo.data.gouv.fr/contours-administratifs/latest/geojson/communes-1000m.geojson
+  code_field: code
+  name_field: nom
+  department_field: departement
+  # departments: ["31"]   # limiter à des départements (liste vide = toute la France)
+
+sources:
+  light:
+    method: zonal_mean
+    url: s3://${LUCIOLES_S3_BUCKET}/inputs/vnl/vnl_{year}_france.tif
+
+steps:
+  fetch:
+    use: configured_sources
+    params: {cache_dir: cache}
+  read: {use: commune_aggregation}
+  calculate: {use: weighted_sum}
+  save: {use: "${LUCIOLES_SAVE:-none}"}
+  build:
+    use: map_files
+    params: {formats: [gpkg, geojson, kml]}
+  distribute:
+    use: s3
+    params:
+      bucket: ${LUCIOLES_S3_BUCKET}
+      prefix: indicators
+      region: ${AWS_DEFAULT_REGION:-eu-west-3}

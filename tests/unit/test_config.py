@@ -152,3 +152,22 @@ def test_load_chain_definition_expands_env(tmp_path, monkeypatch):
     monkeypatch.delenv("LUCIOLES_S3_BUCKET")
     with pytest.raises(ValueError, match="LUCIOLES_S3_BUCKET"):
         load_chain_definition(path)
+
+
+def test_light_pollution_chain_is_valid_and_buildable(monkeypatch):
+    from lucioles_processing.adapters.registry import default_registry
+    from lucioles_processing.domain.model import Period
+
+    monkeypatch.setenv("LUCIOLES_S3_BUCKET", "mon-bucket")
+    definition = load_chain_definition("configs/light_pollution.yaml")
+    assert definition.name == "light_pollution"
+    source = definition.sources["light"]
+    assert source.url.format(**Period(2025).fields()) == "s3://mon-bucket/inputs/vnl/vnl_2025_france.tif"
+    assert definition.steps[Step.SAVE].use == "none"  # `LUCIOLES_SAVE` absent : pas d'écriture en base
+    default_registry().build(definition)  # toutes les implémentations nommées existent
+
+
+def test_light_pollution_chain_saves_to_postgres_when_requested(monkeypatch):
+    monkeypatch.setenv("LUCIOLES_S3_BUCKET", "mon-bucket")
+    monkeypatch.setenv("LUCIOLES_SAVE", "postgres")
+    assert load_chain_definition("configs/light_pollution.yaml").steps[Step.SAVE].use == "postgres"

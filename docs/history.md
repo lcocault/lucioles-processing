@@ -15,6 +15,16 @@ le backlog dans [user-stories/](user-stories/).
   Variante `average` (pas `average_masked`) : sur la France, aucune valeur ≤ 0 ; min 0,22, médiane 0,47, p90 1,65, p99 17,5, max 1647.
 - Extraits dans `tmp/vnl/` (ignoré par git) : France 27,5 Mo, Haute-Garonne 0,5 Mo.
 
+## 2026-11-21 — US-5.1d Sources lues depuis S3 ; chaîne `light_pollution` (`fait`, à valider en réel)
+- `adapters/download_s3.py` : `url: s3://bucket/clé` dans `download()` (HEAD + ETag, GET si changé, atomique, `unchanged`/
+  `unverified`/`cached`), testé avec moto (unitaire + e2e annuel S3 → S3). Le bucket de l'utilisateur est **privé** (403 en
+  accès public) : lecture par les identifiants AWS du workflow.
+- `configs/light_pollution.yaml` : VNL 2025 (variante `average`) → moyenne par commune → niveaux par seuils **provisoires**
+  `[0.5, 1, 2, 5]` (pas d'inversion : plus de radiance = niveau plus élevé ; l'inversion du notebook concerne un autre fichier).
+  Essai local sur l'extrait France : 35 014 communes en 41 s, 223 sans valeur (outre-mer hors extrait) ; niveaux 33/46/11/6/4 %.
+  Valeurs communales : médiane 0,58 ; p90 2,0 ; p99 17 ; max 79 (Chevilly-Larue).
+- Non vérifié : exécution réelle sur GitHub avec le bucket (lecture `inputs/vnl/…`, publication `indicators/…`).
+
 ## 2026-11-21 — Correctif : moyenne zonale sur raster sans `nodata`
 - **Bug** (`spatial.py`, `_raster_mean`) : `rasterio.mask` remplissait les pixels hors commune par 0 ; sans `nodata` ni `condition`
   (cas VIIRS) ils comptaient dans la moyenne et la tiraient vers le bas (Toulouse 16,5 au lieu de 24,8 ; médiane 0,39 au lieu de

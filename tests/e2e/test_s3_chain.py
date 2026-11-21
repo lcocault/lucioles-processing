@@ -83,3 +83,33 @@ def test_unknown_bucket_fails_at_the_distribution_step(env, capsys):
     printed = capsys.readouterr().out
     assert "build" in printed and "distribute" in printed and "NoSuchBucket" in printed
     assert (tmp_path / "ws" / "air" / "2026-10").exists()  # produits conservés pour rejouer la distribution
+
+
+def test_chain_reads_an_annual_raster_from_s3_and_publishes_to_s3(env):
+    """Parcours VIIRS : raster annuel déposé dans S3 (`inputs/vnl/vnl_{year}.tif`), lu puis résultat publié."""
+    import numpy as np
+    import rasterio
+    from rasterio.transform import from_origin
+
+    cfg, tmp_path = env
+    tif = tmp_path / "vnl_2025.tif"
+    with rasterio.open(
+        tif, "w", driver="GTiff", height=100, width=100, count=1, dtype="float32",
+        crs="EPSG:4326", transform=from_origin(0.9, 43.4, 0.005, 0.005),  # sans nodata, comme VIIRS
+    ) as dst:
+        dst.write(np.full((100, 100), 3.0, dtype="float32"), 1)
+    s3 = create_bucket()
+    s3.upload_file(str(tif), BUCKET, "inputs/vnl/vnl_2025.tif")
+    cfg.write_text(
+        cfg.read_text().replace(
+            "    method: nearest_station\n    path: " + f"{tmp_path}/pm10_{{period}}.csv\n    field: pm10\n    dims: [lon, lat]",
+            f"    method: zonal_mean\n    url: s3://{BUCKET}/inputs/vnl/vnl_{{year}}.tif",
+        )
+        .replace("thresholds: [10, 20, 30, 40]", "thresholds: [1, 2, 4, 8]")
+        .replace("fetch: {use: configured_sources}", f"fetch: {{use: configured_sources, params: {{cache_dir: {tmp_path}/cache}}}}")
+    )
+    assert main(["run", "--config", str(cfg), "--period", "2025", "--workspace", str(tmp_path / "ws")]) == 0
+    manifest = json.loads(s3.get_object(Bucket=BUCKET, Key="opf/air/2025/manifest.json")["Body"].read())
+    assert manifest["communes"] == 2 and manifest["period"] == "2025"
+    inputs = manifest["inputs"]["pm10"]
+    assert inputs["origin"] == f"s3://{BUCKET}/inputs/vnl/vnl_2025.tif" and inputs["status"] == "downloaded"

@@ -3,19 +3,17 @@
 À jour au 2026-11-21. Retirer un point une fois résolu (et le noter dans [history.md](history.md)).
 
 ## À faire en priorité
-0. **Première chaîne réelle : pollution lumineuse, VIIRS VNL v2.2** (US-1.9 faite). Reste :
-   - *Accès aux données* : `https://eogdata.mines.edu/nighttime_light/annual/v22/` redirige vers une connexion EOG
-     (Keycloak, OpenID Connect, PKCE). Non vérifié : noms exacts des fichiers v2.2, tailles, années disponibles, nodata,
-     licence (CC BY 4.0 « pour beaucoup de produits », non confirmé pour v2.2), mécanisme de jeton pour un script.
-     Fichiers **globaux** (pas de tuiles), variable utile probable : `average_masked` (fond mis à zéro) ; pas de recommandation
-     explicite trouvée. Options : (a) l'utilisateur crée un compte EOG, déduit les noms de fichiers et fournit les infos ;
-     (b) téléchargement manuel annuel, recadrage sur la France, dépôt du raster réduit dans le bucket S3 (lecture S3 à écrire).
-   - *Code à écrire* : lecture/recadrage France d'un `.tif.gz` global ; niveaux inversés + seuils configurables
-     (`weighted_sum` ou calculateur dédié, voir US-1.8) ; seuils **provisoires** (quantiles) à valider scientifiquement
-     (les bornes `[0,2,3,4,6]` du notebook visent une autre unité).
+0. **Chaîne pollution lumineuse VNL** (US-1.9, 1.10, 5.1d faites) — à lancer sur GitHub Actions
+   (`configs/light_pollution.yaml`, période `2025`, sans données synthétiques) puis à valider. Reste :
+   - *Seuils* provisoires `[0.5, 1, 2, 5]` à valider scientifiquement (voir YAML) ; la variante `average` garde le bruit de fond
+     (~0,3 minimum, pas de valeur nulle) : envisager `average_masked` si disponible.
    - *Sens* : VIIRS mesure la lumière émise vers le haut (peu sensible au bleu), pas la brillance du ciel au sol.
-   - Reste hors VNL (qualité de l'air, pondération population) : US-1.8, sources INERIS, ADMIN_EXPRESS `infos_communes`.
-   - Le fichier `cdn_france_2023.tif` du laboratoire n'a pas de provenance documentée (notebook `EO-map-light-pollution`).
+   - *Données* : mise à jour annuelle manuelle (compte EOG ; l'accès automatisé n'est pas vérifié). Licence VNL v2.2 non
+     confirmée (CC BY 4.0 « pour beaucoup de produits EOG ») : citer « Earth Observation Group, Payne Institute » en cas de
+     publication. 223 communes d'outre-mer sans valeur (extrait France métropolitaine).
+   - *Variante pondérée* (valeur × superficie / population) : exige ADMIN_EXPRESS `infos_communes`.
+   - *Qualité de l'air* et calculateurs du laboratoire : US-1.8, sources INERIS.
+   - Le fichier `cdn_france_2023.tif` du laboratoire n'a pas de provenance documentée.
 0b. **Planification** : le workflow `run-chain.yml` est validé en réel (test de fumée, 2026-11-14) ; activer `schedule`
    dans le workflow avec la première chaîne réelle.
 0c. **Lecture publique des résultats S3** : bucket privé par défaut ; choisir CloudFront, URL présignées ou lecture publique

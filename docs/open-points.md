@@ -1,6 +1,6 @@
 # Points ouverts
 
-À jour au 2026-11-14. Retirer un point une fois résolu (et le noter dans [history.md](history.md)).
+À jour au 2026-11-21. Retirer un point une fois résolu (et le noter dans [history.md](history.md)).
 
 ## À faire en priorité
 0. **Première chaîne réelle : pollution lumineuse, VIIRS VNL v2.2** (US-1.9 faite). Reste :

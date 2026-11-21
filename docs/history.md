@@ -4,6 +4,11 @@ Journal chronologique (le plus récent en premier) destiné à reprendre le trav
 conversation. À compléter à chaque US livrée. Les points non résolus sont dans [open-points.md](open-points.md) ;
 le backlog dans [user-stories/](user-stories/).
 
+## 2026-11-21 — Correctif CI US-1.9 : clé primaire des périodes annuelles
+- Le job `test (3.10)` révélait une collision entre une période annuelle et janvier, stockés tous deux au 1er janvier.
+  La migration `003_annual_period_primary_key.sql` inclut désormais `period_kind` dans la clé primaire
+  d’`indicator_value`, préservant les données et le schéma déjà migré par la version 002.
+
 ## 2026-11-21 — US-1.9 Périodes annuelles (`fait`) ; choix de VIIRS VNL pour la pollution lumineuse
 - `Period(year, month=None)` : `AAAA` en plus de `AAAA-MM` ; `is_annual`, `of_year`, `previous()` de même nature, ordre total
   (annuelle < mensuelle de la même année) ; `fields()` sans `{month}` pour une année (message clair si le YAML l'utilise).

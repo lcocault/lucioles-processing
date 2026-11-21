@@ -66,11 +66,13 @@ class SpatialExtractor:
     @staticmethod
     def _raster_mean(src, geom, source: SourceConfig) -> float:
         try:
-            image, _ = mask(src, [geom], crop=True, all_touched=True)
+            image, _ = mask(src, [geom], crop=True, all_touched=True, filled=False)
         except ValueError:  # commune hors de l'emprise du raster
             return np.nan
-        data = image[0]
-        valid = ~np.isnan(data)
+        # Le masque désigne les pixels hors commune : ne jamais les remplacer par 0, car un raster sans `nodata`
+        # (VIIRS par exemple) les compterait comme de vraies valeurs.
+        data = np.ma.getdata(image[0]).astype("float64")
+        valid = ~np.ma.getmaskarray(image[0]) & ~np.isnan(data)
         if src.nodata is not None:
             valid &= data != src.nodata
         if source.condition:

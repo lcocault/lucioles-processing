@@ -48,3 +48,22 @@ def test_zonal_mean_raster(communes, tmp_path):
 def test_kml_color():
     assert kml_color(0) == "ff57d371"  # #71d357 en aabbggrr
     assert kml_color(None) == kml_color(float("nan"))
+
+
+def test_zonal_mean_ignores_pixels_outside_the_commune_when_raster_has_no_nodata(tmp_path):
+    """Régression : sans `nodata` (cas VIIRS), les pixels hors commune valaient 0 et tiraient la moyenne vers le bas."""
+    import geopandas as gpd
+    import rasterio
+    from rasterio.transform import from_origin
+    from shapely.geometry import Polygon
+
+    triangle = Polygon([(1.0, 43.0), (1.2, 43.0), (1.0, 43.2)])
+    communes = gpd.GeoDataFrame({"code": ["T"]}, geometry=[triangle], crs="EPSG:4326").set_index("code", drop=False)
+    tif = tmp_path / "r.tif"
+    with rasterio.open(
+        tif, "w", driver="GTiff", height=100, width=100, count=1, dtype="float32",
+        crs="EPSG:4326", transform=from_origin(0.9, 43.3, 0.005, 0.005),
+    ) as dst:
+        dst.write(np.full((100, 100), 20.0, dtype="float32"), 1)
+    values = SpatialExtractor(communes).extract(SourceConfig("light", "zonal_mean", path=str(tif)), tif)
+    assert values.tolist() == [20.0]

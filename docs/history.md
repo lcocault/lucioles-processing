@@ -15,6 +15,15 @@ le backlog dans [user-stories/](user-stories/).
   Variante `average` (pas `average_masked`) : sur la France, aucune valeur ≤ 0 ; min 0,22, médiane 0,47, p90 1,65, p99 17,5, max 1647.
 - Extraits dans `tmp/vnl/` (ignoré par git) : France 27,5 Mo, Haute-Garonne 0,5 Mo.
 
+## 2026-11-21 — Correctif : moyenne zonale sur raster sans `nodata`
+- **Bug** (`spatial.py`, `_raster_mean`) : `rasterio.mask` remplissait les pixels hors commune par 0 ; sans `nodata` ni `condition`
+  (cas VIIRS) ils comptaient dans la moyenne et la tiraient vers le bas (Toulouse 16,5 au lieu de 24,8 ; médiane 0,39 au lieu de
+  0,59). Détecté parce qu'une moyenne communale (0,17) était inférieure au plus petit pixel de l'extrait (0,29). Corrigé avec
+  `filled=False` (masque explicite) ; test de régression avec une commune triangulaire. Les sources déjà configurées avec
+  `condition: "data > 0"` (chaîne de test, notebooks) étaient peu touchées.
+- Essai réel Haute-Garonne (VNL 2025, seuils provisoires 0,5/1/2/5, sans inversion des niveaux) : 586 communes, Blagnac,
+  Toulouse, Colomiers, Balma en tête ; fichiers dans `tmp/vnl-out/`.
+
 ## 2026-11-21 — US-1.9 Périodes annuelles (`fait`) ; choix de VIIRS VNL pour la pollution lumineuse
 - `Period(year, month=None)` : `AAAA` en plus de `AAAA-MM` ; `is_annual`, `of_year`, `previous()` de même nature, ordre total
   (annuelle < mensuelle de la même année) ; `fields()` sans `{month}` pour une année (message clair si le YAML l'utilise).
